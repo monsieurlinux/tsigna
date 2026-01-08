@@ -1,6 +1,6 @@
 <figure>
   <img src="img/tsigna-nvda-1y-75.png" width="800">
-  <figcaption>Tsigna plotting NVDA stock price over 1 year</figcaption>
+  <figcaption>Tsigna plotting NVDA stock price and moving averages over 1 year</figcaption>
 </figure>
 
 # Tsigna
