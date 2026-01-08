@@ -1,7 +1,4 @@
-<figure>
-  <img src="img/tsigna-nvda-1y-75.png" width="800">
-  <figcaption>NVDA stock price and moving averages over 1 year</figcaption>
-</figure>
+![NVDA stock price and moving averages over 1 year](img/tsigna-nvda-1y-75.png "NVDA stock price and moving averages over 1 year")
 
 # Tsigna
 
