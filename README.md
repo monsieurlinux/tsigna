@@ -2,19 +2,13 @@
 
 # Tsigna
 
-A terminal-based financial charting tool for plotting stock prices, moving averages, and technical indicators. It is most useful for medium-term trading.
-
-## Description
-
-Tsigna is a Python financial analysis tool that runs entirely in the terminal. It fetches historical stock data from Yahoo Finance, calculates technical indicators including moving averages, MACD, and RSI, and displays them as text-based charts using the plotille library. The tool supports single ticker analysis, ratio comparisons between two tickers, and a special MMRI calculation. Users can customize the time period and split the terminal display to show multiple indicators simultaneously.
+Tsigna is a Python financial analysis tool that runs entirely in the terminal. It is most useful for medium-term trading. It fetches historical stock data from Yahoo Finance, calculates technical indicators including moving averages, MACD, and RSI, and displays them as text-based charts using the plotille library. The tool supports single ticker analysis, ratio comparisons between two tickers, and a special MMRI calculation. Users can customize the time period and split the terminal display to show multiple indicators simultaneously.
 
 ![NVDA stock price with RSI indicator over 1 year](img/tsigna-nvda-rsi-1y-75.png "NVDA stock price with RSI indicator over 1 year")
 
 ## Background
 
-Originally I was looking for a free online tool to plot the **ratio between two tickers**. I didn't find such a tool so I made it. I'm a Linux guy, so of course it had to run in the terminal.
-
-The name Tsigna comes from 'T' for terminal and 'signa', which is the plural form of signum, the latin word for signal. The 'T' also stands for technical, like in technical indicators, from which we get technical signals.
+Originally I was looking for a free online tool to plot the **ratio between two tickers**, but I didn't find such a tool so I started working on Tsigna. The name comes from 'T' for terminal and the plural form of signum, the latin word for signal. The 'T' also stands for technical, like in technical indicators, from which we get technical signals.
 
 ![Ratio between NVDA and WMT stock prices over 2 years](img/tsigna-nvda-wmt-2y-75.png "Ratio between NVDA and WMT stock prices over 2 years")
 
@@ -71,16 +65,19 @@ python3 tsigna.py [arguments] ticker1 [ticker2]
 
 ### Command-Line Arguments
 
-| Argument      | Short Flag | Description                          | Default         |
-| ------------- | ---------- | ------------------------------------ | --------------- |
-| `--help`      | `-h`       | Show help message                    |           |
-| `--macd`      | `-m`       | Display MACD indicator plot          | `False`         |
-| `--macd-only` | `-M`       | Display **only** MACD indicator plot | `False`         |
-| `--no-cache`  | `-n`       | Bypass cache and get latest data     | `False`         |
-| `--periods`   | `-p`       | Set moving averages periods          | `[20, 50, 100]` |
-| `--rsi`       | `-r`       | Display RSI indicator plot           | `False`         |
-| `--rsi-only`  | `-R`       | Display **only** RSI indicator plot  | `False`         |
-| `--years`     | `-y`       | Set years to plot, use 0 for ytd     | `1`             |
+| Argument        | Short Flag | Description                       | Default         |
+| --------------- | ---------- | --------------------------------- | --------------- |
+| `--help`        | `-h`       | Show help message                 |                 |
+| `--bollinger`   | `-b`       | Display Bollinger Bands indicator | `False`         |
+| `--macd`        | `-m`       | Display MACD indicator            | `False`         |
+| `--macd-only`   | `-M`       | Display **only** MACD indicator   | `False`         |
+| `--no-cache`    | `-n`       | Bypass cache and get latest data  | `False`         |
+| `--periods`     | `-p`       | Set moving averages periods       | `[20, 50, 100]` |
+| `--rsi`         | `-r`       | Display RSI indicator             | `False`         |
+| `--rsi-only`    | `-R`       | Display **only** RSI indicator    | `False`         |
+| `--volume`      | `-v`       | Display volume                    | `False`         |
+| `--volume-only` | `-V`       | Display **only** volume           | `False`         |
+| `--years`       | `-y`       | Set years to plot, use 0 for ytd  | `1`             |
 
 ## Configuration
 
@@ -100,4 +97,4 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 Tsigna is not doing much more than getting data from [yahooquery](https://github.com/dpguthrie/yahooquery), processing it with [pandas](https://github.com/pandas-dev/pandas), and plotting it with [plotille](https://github.com/tammoippen/plotille), so thanks to the creators and contributors of these great libraries for making it possible.
 
-Thanks also to the [ticker](https://github.com/achannarasappa/ticker) project, which is pretty much the only other financial tool I use along with [tsigna](https://github.com/monsieurlinux/tsigna) to make my investing decisions.
+Thanks also to the [ticker](https://github.com/achannarasappa/ticker) tool, which is very useful to track prices in real time from the terminal.

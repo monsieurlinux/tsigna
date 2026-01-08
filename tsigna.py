@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 """
-A terminal-based financial charting tool for plotting stock prices, moving
-averages, and technical indicators. It is most useful for medium-term trading.
+Terminal tool to plot stocks, crypto, pair ratios, and technical indicators.
 
 This is a Python financial analysis tool that runs entirely in the terminal. It
 fetches historical stock data from Yahoo Finance, calculates technical
@@ -40,7 +39,7 @@ MOVING_AVG_1 = 20
 MOVING_AVG_2 = 50
 MOVING_AVG_3 = 200
 YEARS_TO_PLOT = 1
-HEIGHT_RATIO = 0.3
+INDICATOR_HEIGHT_RATIO = 0.3
 MMRI_DIVISOR = 1.61
 MACD_FAST_LEN = 12
 MACD_SLOW_LEN = 26
@@ -48,6 +47,8 @@ MACD_SIGNAL_LEN = 9
 RSI_PERIOD = 14
 RSI_OVERBOUGHT_LEVEL = 70
 RSI_OVERSOLD_LEVEL = 30
+BB_PERIOD = 20
+BB_STD_DEV = 2
 
 # Valid terminal plots colors (standard 8-color ANSI palette):
 # black, red, green, yellow, blue, magenta, cyan, and white
@@ -55,12 +56,16 @@ PRICE_RATIO_COLOR = 'blue'
 MOVING_AVG_1_COLOR = 'green'
 MOVING_AVG_2_COLOR = 'yellow'
 MOVING_AVG_3_COLOR = 'red'
+VOLUME_VALUE_COLOR = 'blue'
 MACD_VALUE_COLOR = 'blue'
 MACD_SIGNAL_COLOR = 'red'
 MACD_HISTOGRAM_COLOR = 'green'
 RSI_VALUE_COLOR = 'blue'
 RSI_OVERBOUGHT_COLOR = 'red'
 RSI_OVERSOLD_COLOR = 'green'
+BB_SMA_COLOR = 'cyan'
+BB_UPPER_BAND_COLOR = 'red'
+BB_LOWER_BAND_COLOR = 'green'
 
 # Get a logger for this script
 logger = logging.getLogger(__name__)
@@ -73,19 +78,25 @@ def main():
                         help='first or only ticker (or special MMRI ticker)')
     parser.add_argument('ticker2', nargs='?', default='',
                         help='second ticker for ratio plot')
+    parser.add_argument('-b', '--bollinger', action='store_true',
+                        help='display Bollinger Bands indicator')
     parser.add_argument('-m', '--macd', action='store_true',
-                        help='display MACD indicator plot')
-    parser.add_argument('-M', '--macd-only', action='store_true', dest='macd_only',
-                        help='display only MACD indicator plot')
-    parser.add_argument('-n', '--no-cache', action='store_true', dest='no_cache',
+                        help='display MACD indicator')
+    parser.add_argument('-M', '--macd-only', action='store_true',
+                        help='display only MACD indicator')
+    parser.add_argument('-n', '--no-cache', action='store_true',
                         help='bypass cache and get latest data')
     parser.add_argument('-p', '--periods', nargs=3, type=int,
                         default=[MOVING_AVG_1, MOVING_AVG_2, MOVING_AVG_3],
                         help='set moving averages periods')
     parser.add_argument('-r', '--rsi', action='store_true',
-                        help='display RSI indicator plot')
-    parser.add_argument('-R', '--rsi-only', action='store_true', dest='rsi_only',
-                        help='display only RSI indicator plot')
+                        help='display RSI indicator')
+    parser.add_argument('-R', '--rsi-only', action='store_true',
+                        help='display only RSI indicator')
+    parser.add_argument('-v', '--volume', action='store_true',
+                        help='display volume')
+    parser.add_argument('-V', '--volume-only', action='store_true',
+                        help='display only volume')
     parser.add_argument('-y', '--years', type=int, default=YEARS_TO_PLOT,
                         help='set years to plot, use 0 for ytd')
     args = parser.parse_args()
@@ -104,22 +115,31 @@ def main():
         logger.exception(f'Unexpected error: {e}')
     else:
         df = process_data(df1, df2, args.periods, args.years, plot_name)
-        if args.macd_only:
+        if args.volume_only:
+            plot_data(df, plot_name, 'vol')
+        elif args.macd_only:
             plot_data(df, plot_name, 'macd')
         elif args.rsi_only:
             plot_data(df, plot_name, 'rsi')
-        elif args.macd and args.rsi:
-            plot_data(df, plot_name, 'main', 1-2*HEIGHT_RATIO)
-            plot_data(df, plot_name, 'macd', HEIGHT_RATIO)
-            plot_data(df, plot_name, 'rsi', HEIGHT_RATIO)
-        elif args.macd:
-            plot_data(df, plot_name, 'main', 1-HEIGHT_RATIO)
-            plot_data(df, plot_name, 'macd', HEIGHT_RATIO)
-        elif args.rsi:
-            plot_data(df, plot_name, 'main', 1-HEIGHT_RATIO)
-            plot_data(df, plot_name, 'rsi', HEIGHT_RATIO)
         else:
-            plot_data(df, plot_name, 'main')
+            main_plot = 'bb' if args.bollinger else 'ma'
+            indicators = []
+            if args.volume: indicators.append('vol')
+            if args.macd: indicators.append('macd')
+            if args.rsi: indicators.append('rsi')
+            num_ind = len(indicators)
+            
+            if num_ind > 2:
+                logger.error(f'A maximum of two indicators can be displayed')
+            elif num_ind == 2:
+                plot_data(df, plot_name, main_plot, 1-2*INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, indicators[0], INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, indicators[1], INDICATOR_HEIGHT_RATIO)
+            elif num_ind == 1:
+                plot_data(df, plot_name, main_plot, 1-INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, indicators[0], INDICATOR_HEIGHT_RATIO)
+            else:
+                plot_data(df, plot_name, main_plot)
 
 
 def get_tickers_and_plot_name(args):
@@ -244,6 +264,12 @@ def process_data(df1, df2, periods, years, plot_name):
     rs = avg_gain / (avg_loss + 1e-10)  # RS (avoid division by zero)
     df['rsi'] = 100 - (100 / (1 + rs))  # RSI (normalize to a scale of 0 to 100)
 
+    # Create new columns for the Bollinger Bands indicator
+    df['sma'] = df['adjclose'].rolling(window=BB_PERIOD).mean()  # Rolling mean
+    std = df['adjclose'].rolling(window=BB_PERIOD).std() # Rolling std deviation
+    df['upper'] = df['sma'] + (std * BB_STD_DEV)  # Upper band
+    df['lower'] = df['sma'] - (std * BB_STD_DEV)  # Lower band
+
     # Keep only the data range to be plotted (use pandas dates types)
     today = pd.Timestamp.now(tz='UTC').normalize()
     
@@ -264,7 +290,10 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     # Display the plot in the terminal
     dates = df.index.tolist()
     
-    if plot_type == 'macd':
+    if plot_type == 'vol':
+        volume = df['volume'].tolist()
+        all_values = volume
+    elif plot_type == 'macd':
         macd = df['macd'].tolist()
         signal = df['signal'].tolist()
         histogram = df['histogram'].tolist()
@@ -274,12 +303,18 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         overbought = [RSI_OVERBOUGHT_LEVEL] * len(dates)
         oversold = [RSI_OVERSOLD_LEVEL] * len(dates)
         all_values = rsi + overbought + oversold
-    else:
-        values = df['adjclose'].tolist()
+    elif plot_type == 'bb':
+        close = df['adjclose'].tolist()
+        sma = df['sma'].tolist()
+        upper = df['upper'].tolist()
+        lower = df['lower'].tolist()
+        all_values = close + sma + upper + lower
+    else:  # Main plot with moving averages
+        close = df['adjclose'].tolist()
         ma1 = df['ma1'].tolist()
         ma2 = df['ma2'].tolist()
         ma3 = df['ma3'].tolist()
-        all_values = values + ma1 + ma2 + ma3
+        all_values = close + ma1 + ma2 + ma3
         
     fig = plotille.Figure()
 
@@ -290,7 +325,11 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     fig.set_y_limits(min(all_values), max(all_values))
 
     # Prepare the plots and text to display
-    if plot_type == 'macd':
+    if plot_type == 'vol':
+        fig.plot(dates, volume, lc=VOLUME_VALUE_COLOR)
+        last = f'{volume[-1]:.0f}'
+        text = f'Volume last value: {last}'
+    elif plot_type == 'macd':
         fig.plot(dates, signal, lc=MACD_SIGNAL_COLOR)
         fig.plot(dates, macd, lc=MACD_VALUE_COLOR)
         fig.plot(dates, histogram, lc=MACD_HISTOGRAM_COLOR)
@@ -302,13 +341,21 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, rsi, lc=RSI_VALUE_COLOR)
         last = f'{rsi[-1]:.2f}'
         text = f'RSI last value: {last}'
-    else:
+    elif plot_type == 'bb':
+        fig.plot(dates, close, lc=PRICE_RATIO_COLOR)
+        fig.plot(dates, sma, lc=BB_SMA_COLOR)
+        fig.plot(dates, upper, lc=BB_UPPER_BAND_COLOR)
+        fig.plot(dates, lower, lc=BB_LOWER_BAND_COLOR)
+        last = f'{close[-1]:.0f}' if close[-1] > 1000 else f'{close[-1]:.2f}'
+        change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
+        text = f'{plot_name} last value: {last} ({change}%)'
+    else:  # Main plot with moving averages
         fig.plot(dates, ma3, lc=MOVING_AVG_3_COLOR)
         fig.plot(dates, ma2, lc=MOVING_AVG_2_COLOR)
         fig.plot(dates, ma1, lc=MOVING_AVG_1_COLOR)
-        fig.plot(dates, values, lc=PRICE_RATIO_COLOR)
-        last = f'{values[-1]:.0f}' if values[-1] > 1000 else f'{values[-1]:.2f}'
-        change = f'{(values[-1] / values[0] - 1) * 100:+.0f}'
+        fig.plot(dates, close, lc=PRICE_RATIO_COLOR)
+        last = f'{close[-1]:.0f}' if close[-1] > 1000 else f'{close[-1]:.2f}'
+        change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
         text = f'{plot_name} last value: {last} ({change}%)'
 
     # Display the last value text
