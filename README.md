@@ -29,7 +29,7 @@ Originally I was looking for a free online tool to plot the **ratio between two 
 
 ### The Origin of its Name
 
-The name Tsigna comes from T for terminal and signa, which is the plural form of signum, the latin word for signal. The T also stands for technical, like in technical indicators, from which we get technical signals.
+The name Tsigna comes from 'T' for terminal and 'signa', which is the plural form of signum, the latin word for signal. The 'T' also stands for technical, like in technical indicators, from which we get technical signals.
 
 
 ## Installation
@@ -85,8 +85,6 @@ python3 tsigna.py [arguments] ticker1 [ticker2]
 
 ### Command-Line Arguments
 
-Here is a list of the available arguments:
-
 | Argument      | Short Flag | Description                          | Default         |
 | ------------- | ---------- | ------------------------------------ | --------------- |
 | `--help`      | `-h`       | Show help message                    |           |
@@ -102,10 +100,6 @@ Here is a list of the available arguments:
 
 You can edit the configuration constants directly at the top of the tsigna.py file if you wish to change the default behavior. For example you can change the expiration time of the cache (it is 5 minutes by default) or disable it. You can also change the colors of the lines, the parameters of the technical indicators, etc.
 
-## License
-
-This project is licensed under the MIT license. See the LICENSE file for details.
-
 ## Not Financial Advice
 
 I do not own any of the stocks in the examples, I chose them because they are very popular.
@@ -114,4 +108,4 @@ I do not own any of the stocks in the examples, I chose them because they are ve
 
 Tsigna is not doing much more than getting data from [yahooquery](https://github.com/dpguthrie/yahooquery), processing it with [pandas](https://github.com/pandas-dev/pandas), and plotting it with [plotille](https://github.com/tammoippen/plotille), so thanks to the creators and contributors of these great libraries for making it possible.
 
-Thanks also to the [ticker](https://github.com/achannarasappa/ticker) project, which is pretty much the only other financial tool I use along with [tsigna](https://github.com/mlinux/tsigna) to make my investing decisions.
+Thanks also to the [ticker](https://github.com/achannarasappa/ticker) project, which is pretty much the only other financial tool I use along with [tsigna](https://github.com/monsieurlinux/tsigna) to make my investing decisions.
