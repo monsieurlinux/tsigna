@@ -1,6 +1,6 @@
 <figure>
   <img src="img/tsigna-nvda-1y-75.png" width="800">
-  <figcaption>Tsigna plotting NVDA stock price and moving averages over 1 year</figcaption>
+  <figcaption>NVDA stock price and moving averages over 1 year</figcaption>
 </figure>
 
 # Tsigna
@@ -13,7 +13,7 @@ Tsigna is a Python financial analysis tool that runs entirely in the terminal. I
 
 <figure>
   <img src="img/tsigna-nvda-rsi-1y-75.png" width="800">
-  <figcaption>Tsigna plotting NVDA stock price with RSI indicator over 1 year</figcaption>
+  <figcaption>NVDA stock price with RSI indicator over 1 year</figcaption>
 </figure>
 
 ## Background
@@ -24,7 +24,7 @@ Originally I was looking for a free online tool to plot the **ratio between two 
 
 <figure>
   <img src="img/tsigna-nvda-wmt-2y-75.png" width="800">
-  <figcaption>Tsigna plotting ratio between NVDA and WMT stock prices over 2 years</figcaption>
+  <figcaption>Ratio between NVDA and WMT stock prices over 2 years</figcaption>
 </figure>
 
 ### The Origin of its Name
