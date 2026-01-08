@@ -8,10 +8,7 @@ A terminal-based financial charting tool for plotting stock prices, moving avera
 
 Tsigna is a Python financial analysis tool that runs entirely in the terminal. It fetches historical stock data from Yahoo Finance, calculates technical indicators including moving averages, MACD, and RSI, and displays them as text-based charts using the plotille library. The tool supports single ticker analysis, ratio comparisons between two tickers, and a special MMRI calculation. Users can customize the time period and split the terminal display to show multiple indicators simultaneously.
 
-<figure>
-  <img src="img/tsigna-nvda-rsi-1y-75.png" width="800">
-  <figcaption>NVDA stock price with RSI indicator over 1 year</figcaption>
-</figure>
+![NVDA stock price with RSI indicator over 1 year](img/tsigna-nvda-rsi-1y-75.png "NVDA stock price with RSI indicator over 1 year")
 
 ## Background
 
@@ -19,10 +16,7 @@ Tsigna is a Python financial analysis tool that runs entirely in the terminal. I
 
 Originally I was looking for a free online tool to plot the **ratio between two tickers**. I didn't find such a tool so I made it. I'm a Linux guy, so of course it had to run in the terminal.
 
-<figure>
-  <img src="img/tsigna-nvda-wmt-2y-75.png" width="800">
-  <figcaption>Ratio between NVDA and WMT stock prices over 2 years</figcaption>
-</figure>
+![Ratio between NVDA and WMT stock prices over 2 years](img/tsigna-nvda-wmt-2y-75.png "Ratio between NVDA and WMT stock prices over 2 years")
 
 ### The Origin of its Name
 
