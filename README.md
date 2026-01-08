@@ -90,6 +90,12 @@ You can edit the configuration constants directly at the top of the tsigna.py fi
 
 I do not own any of the stocks in the examples, I chose them because they are very popular.
 
+## License
+
+Copyright (c) 2025 Monsieur Linux
+
+This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+
 ## Acknowledgements
 
 Tsigna is not doing much more than getting data from [yahooquery](https://github.com/dpguthrie/yahooquery), processing it with [pandas](https://github.com/pandas-dev/pandas), and plotting it with [plotille](https://github.com/tammoippen/plotille), so thanks to the creators and contributors of these great libraries for making it possible.

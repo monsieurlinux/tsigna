@@ -12,9 +12,9 @@ analysis, ratio comparisons between two tickers, and a special MMRI calculation.
 Users can customize the time period and split the terminal display to show
 multiple indicators simultaneously.
 
-Author: Monsieur Linux
+Copyright (c) 2025 Monsieur Linux
 
-License: MIT
+Licensed under the MIT License. See the LICENSE file for details.
 """
 
 # Standard library imports
