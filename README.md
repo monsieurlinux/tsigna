@@ -12,16 +12,11 @@ Tsigna is a Python financial analysis tool that runs entirely in the terminal. I
 
 ## Background
 
-### Where the Idea Comes From
-
 Originally I was looking for a free online tool to plot the **ratio between two tickers**. I didn't find such a tool so I made it. I'm a Linux guy, so of course it had to run in the terminal.
-
-![Ratio between NVDA and WMT stock prices over 2 years](img/tsigna-nvda-wmt-2y-75.png "Ratio between NVDA and WMT stock prices over 2 years")
-
-### The Origin of its Name
 
 The name Tsigna comes from 'T' for terminal and 'signa', which is the plural form of signum, the latin word for signal. The 'T' also stands for technical, like in technical indicators, from which we get technical signals.
 
+![Ratio between NVDA and WMT stock prices over 2 years](img/tsigna-nvda-wmt-2y-75.png "Ratio between NVDA and WMT stock prices over 2 years")
 
 ## Installation
 
