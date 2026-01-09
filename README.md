@@ -65,19 +65,21 @@ python3 tsigna.py [arguments] ticker1 [ticker2]
 
 ### Command-Line Arguments
 
-| Argument        | Short Flag | Description                       | Default         |
-| --------------- | ---------- | --------------------------------- | --------------- |
-| `--help`        | `-h`       | Show help message                 |                 |
-| `--bollinger`   | `-b`       | Display Bollinger Bands indicator | `False`         |
-| `--macd`        | `-m`       | Display MACD indicator            | `False`         |
-| `--macd-only`   | `-M`       | Display **only** MACD indicator   | `False`         |
-| `--no-cache`    | `-n`       | Bypass cache and get latest data  | `False`         |
-| `--periods`     | `-p`       | Set moving averages periods       | `[20, 50, 100]` |
-| `--rsi`         | `-r`       | Display RSI indicator             | `False`         |
-| `--rsi-only`    | `-R`       | Display **only** RSI indicator    | `False`         |
-| `--volume`      | `-v`       | Display volume                    | `False`         |
-| `--volume-only` | `-V`       | Display **only** volume           | `False`         |
-| `--years`       | `-y`       | Set years to plot, use 0 for ytd  | `1`             |
+| Argument        | Short Flag | Description                            | Default         |
+| --------------- | ---------- | -------------------------------------- | --------------- |
+| `--help`        | `-h`       | Show help message                      |                 |
+| `--bollinger`   | `-b`       | Display Bollinger Bands indicator      | `False`         |
+| `--macd`        | `-m`       | Display MACD indicator                 | `False`         |
+| `--macd-only`   | `-M`       | Display **only** MACD indicator        | `False`         |
+| `--no-cache`    | `-n`       | Bypass cache and get latest data       | `False`         |
+| `--periods`     | `-p`       | Set moving averages periods            | `[20, 50, 100]` |
+| `--rsi`         | `-r`       | Display RSI indicator                  | `False`         |
+| `--rsi-only`    | `-R`       | Display **only** RSI indicator         | `False`         |
+| `--stoch`       | `-s`       | Display Stochastics indicator          | `False`         |
+| `--stoch-only`  | `-S`       | Display **only** Stochastics indicator | `False`         |
+| `--volume`      | `-v`       | Display volume                         | `False`         |
+| `--volume-only` | `-V`       | Display **only** volume                | `False`         |
+| `--years`       | `-y`       | Set years to plot, use 0 for ytd       | `1`             |
 
 ## Configuration
 

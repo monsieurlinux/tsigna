@@ -49,6 +49,11 @@ RSI_OVERBOUGHT_LEVEL = 70
 RSI_OVERSOLD_LEVEL = 30
 BB_PERIOD = 20
 BB_STD_DEV = 2
+STOCH_K_PERIOD = 14
+STOCH_K_SMOOTHING = 3  # Set to 1 for fast stochastics
+STOCH_D_PERIOD = 3
+STOCH_OVERBOUGHT_LEVEL = 80
+STOCH_OVERSOLD_LEVEL = 20
 
 # Valid terminal plots colors (standard 8-color ANSI palette):
 # black, red, green, yellow, blue, magenta, cyan, and white
@@ -66,6 +71,10 @@ RSI_OVERSOLD_COLOR = 'green'
 BB_SMA_COLOR = 'cyan'
 BB_UPPER_BAND_COLOR = 'red'
 BB_LOWER_BAND_COLOR = 'green'
+STOCH_K_COLOR = 'blue'
+STOCH_D_COLOR = 'red'
+STOCH_OVERBOUGHT_COLOR = 'red'
+STOCH_OVERSOLD_COLOR = 'green'
 
 # Get a logger for this script
 logger = logging.getLogger(__name__)
@@ -93,6 +102,10 @@ def main():
                         help='display RSI indicator')
     parser.add_argument('-R', '--rsi-only', action='store_true',
                         help='display only RSI indicator')
+    parser.add_argument('-s', '--stoch', action='store_true',
+                        help='display Stochastics indicator')
+    parser.add_argument('-S', '--stoch-only', action='store_true',
+                        help='display only Stochastics indicator')
     parser.add_argument('-v', '--volume', action='store_true',
                         help='display volume')
     parser.add_argument('-V', '--volume-only', action='store_true',
@@ -121,12 +134,15 @@ def main():
             plot_data(df, plot_name, 'macd')
         elif args.rsi_only:
             plot_data(df, plot_name, 'rsi')
+        elif args.stoch_only:
+            plot_data(df, plot_name, 'stoch')
         else:
             main_plot = 'bb' if args.bollinger else 'ma'
             indicators = []
             if args.volume: indicators.append('vol')
             if args.macd: indicators.append('macd')
             if args.rsi: indicators.append('rsi')
+            if args.stoch: indicators.append('stoch')
             num_ind = len(indicators)
             
             if num_ind > 2:
@@ -264,6 +280,13 @@ def process_data(df1, df2, periods, years, plot_name):
     rs = avg_gain / (avg_loss + 1e-10)  # RS (avoid division by zero)
     df['rsi'] = 100 - (100 / (1 + rs))  # RSI (normalize to a scale of 0 to 100)
 
+    # Create new columns for the Stochastic Oscillator indicator
+    low_min = df['low'].rolling(window=STOCH_K_PERIOD).min()    # Lowest low
+    high_max = df['high'].rolling(window=STOCH_K_PERIOD).max()  # Highest high
+    fast_k = ((df['close'] - low_min) / (high_max - low_min)) * 100  # Fast
+    df['stoch_k'] = fast_k.rolling(window=STOCH_K_SMOOTHING).mean()  # Smoothed
+    df['stoch_d'] = df['stoch_k'].rolling(window=STOCH_D_PERIOD).mean() # Slow
+
     # Create new columns for the Bollinger Bands indicator
     df['sma'] = df['adjclose'].rolling(window=BB_PERIOD).mean()  # Rolling mean
     std = df['adjclose'].rolling(window=BB_PERIOD).std() # Rolling std deviation
@@ -303,6 +326,12 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         overbought = [RSI_OVERBOUGHT_LEVEL] * len(dates)
         oversold = [RSI_OVERSOLD_LEVEL] * len(dates)
         all_values = rsi + overbought + oversold
+    elif plot_type == 'stoch':
+        stoch_k = df['stoch_k'].tolist()
+        stoch_d = df['stoch_d'].tolist()
+        overbought = [STOCH_OVERBOUGHT_LEVEL] * len(dates)
+        oversold = [STOCH_OVERSOLD_LEVEL] * len(dates)
+        all_values = stoch_k + stoch_d + overbought + oversold
     elif plot_type == 'bb':
         close = df['adjclose'].tolist()
         sma = df['sma'].tolist()
@@ -341,6 +370,13 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, rsi, lc=RSI_VALUE_COLOR)
         last = f'{rsi[-1]:.2f}'
         text = f'RSI last value: {last}'
+    elif plot_type == 'stoch':
+        fig.plot(dates, overbought, lc=STOCH_OVERBOUGHT_COLOR)
+        fig.plot(dates, oversold, lc=STOCH_OVERSOLD_COLOR)
+        fig.plot(dates, stoch_k, lc=STOCH_K_COLOR)
+        fig.plot(dates, stoch_d, lc=STOCH_D_COLOR)
+        last = f'{stoch_d[-1]:.2f}'
+        text = f'Stochastics last value: {last}'
     elif plot_type == 'bb':
         fig.plot(dates, close, lc=PRICE_RATIO_COLOR)
         fig.plot(dates, sma, lc=BB_SMA_COLOR)
