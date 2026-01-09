@@ -69,6 +69,8 @@ python3 tsigna.py [arguments] ticker1 [ticker2]
 | --------------- | ---------- | -------------------------------------- | --------------- |
 | `--help`        | `-h`       | Show help message                      |                 |
 | `--bollinger`   | `-b`       | Display Bollinger Bands indicator      | `False`         |
+| `--mfi`         | `-f`       | Display MFI indicator                  | `False`         |
+| `--mfi-only`    | `-F`       | Display **only** MFI indicator         | `False`         |
 | `--macd`        | `-m`       | Display MACD indicator                 | `False`         |
 | `--macd-only`   | `-M`       | Display **only** MACD indicator        | `False`         |
 | `--no-cache`    | `-n`       | Bypass cache and get latest data       | `False`         |

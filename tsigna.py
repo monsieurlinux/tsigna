@@ -47,6 +47,9 @@ MACD_SIGNAL_LEN = 9
 RSI_PERIOD = 14
 RSI_OVERBOUGHT_LEVEL = 70
 RSI_OVERSOLD_LEVEL = 30
+MFI_PERIOD = 14
+MFI_OVERBOUGHT_LEVEL = 80
+MFI_OVERSOLD_LEVEL = 20
 BB_PERIOD = 20
 BB_STD_DEV = 2
 STOCH_K_PERIOD = 14
@@ -68,6 +71,9 @@ MACD_HISTOGRAM_COLOR = 'green'
 RSI_VALUE_COLOR = 'blue'
 RSI_OVERBOUGHT_COLOR = 'red'
 RSI_OVERSOLD_COLOR = 'green'
+MFI_VALUE_COLOR = 'blue'
+MFI_OVERBOUGHT_COLOR = 'red'
+MFI_OVERSOLD_COLOR = 'green'
 BB_SMA_COLOR = 'cyan'
 BB_UPPER_BAND_COLOR = 'red'
 BB_LOWER_BAND_COLOR = 'green'
@@ -89,6 +95,10 @@ def main():
                         help='second ticker for ratio plot')
     parser.add_argument('-b', '--bollinger', action='store_true',
                         help='display Bollinger Bands indicator')
+    parser.add_argument('-f', '--mfi', action='store_true',
+                        help='display MFI indicator')
+    parser.add_argument('-F', '--mfi-only', action='store_true',
+                        help='display only MFI indicator')
     parser.add_argument('-m', '--macd', action='store_true',
                         help='display MACD indicator')
     parser.add_argument('-M', '--macd-only', action='store_true',
@@ -128,12 +138,18 @@ def main():
         logger.exception(f'Unexpected error: {e}')
     else:
         df = process_data(df1, df2, args.periods, args.years, plot_name)
-        if args.volume_only:
+        if ticker2 != '' and (args.mfi or args.mfi_only):
+            logger.error(f'MFI indicator not available for ratio plot')
+        elif ticker2 != '' and (args.stoch or args.stoch_only):
+            logger.error(f'Stochastics indicator not available for ratio plot')
+        elif args.volume_only:
             plot_data(df, plot_name, 'vol')
         elif args.macd_only:
             plot_data(df, plot_name, 'macd')
         elif args.rsi_only:
             plot_data(df, plot_name, 'rsi')
+        elif args.mfi_only:
+            plot_data(df, plot_name, 'mfi')
         elif args.stoch_only:
             plot_data(df, plot_name, 'stoch')
         else:
@@ -142,6 +158,7 @@ def main():
             if args.volume: indicators.append('vol')
             if args.macd: indicators.append('macd')
             if args.rsi: indicators.append('rsi')
+            if args.mfi: indicators.append('mfi')
             if args.stoch: indicators.append('stoch')
             num_ind = len(indicators)
             
@@ -280,18 +297,33 @@ def process_data(df1, df2, periods, years, plot_name):
     rs = avg_gain / (avg_loss + 1e-10)  # RS (avoid division by zero)
     df['rsi'] = 100 - (100 / (1 + rs))  # RSI (normalize to a scale of 0 to 100)
 
-    # Create new columns for the Stochastic Oscillator indicator
-    low_min = df['low'].rolling(window=STOCH_K_PERIOD).min()    # Lowest low
-    high_max = df['high'].rolling(window=STOCH_K_PERIOD).max()  # Highest high
-    fast_k = ((df['close'] - low_min) / (high_max - low_min)) * 100  # Fast
-    df['stoch_k'] = fast_k.rolling(window=STOCH_K_SMOOTHING).mean()  # Smoothed
-    df['stoch_d'] = df['stoch_k'].rolling(window=STOCH_D_PERIOD).mean() # Slow
-
     # Create new columns for the Bollinger Bands indicator
     df['sma'] = df['adjclose'].rolling(window=BB_PERIOD).mean()  # Rolling mean
     std = df['adjclose'].rolling(window=BB_PERIOD).std() # Rolling std deviation
     df['upper'] = df['sma'] + (std * BB_STD_DEV)  # Upper band
     df['lower'] = df['sma'] - (std * BB_STD_DEV)  # Lower band
+
+    if 'low' in df.columns:
+        # Indicators unavailable for ratio plots because OHLC prices required
+
+        # Create new columns for the Stochastic Oscillator indicator
+        low_min = df['low'].rolling(window=STOCH_K_PERIOD).min()    # Lowest low
+        high_max = df['high'].rolling(window=STOCH_K_PERIOD).max()  # Highest high
+        fast_k = ((df['close'] - low_min) / (high_max - low_min)) * 100  # Fast
+        df['stoch_k'] = fast_k.rolling(window=STOCH_K_SMOOTHING).mean()  # Smoothed
+        df['stoch_d'] = df['stoch_k'].rolling(window=STOCH_D_PERIOD).mean() # Slow
+
+        # Create a new column for the MFI indicator (Money Flow Index)
+        typical_price = (df['high'] + df['low'] + df['close']) / 3
+        money_flow = typical_price * df['volume']
+        delta = typical_price.diff()  # Difference from the previous day
+        pos_mf = money_flow.where(delta > 0, 0)  # Positive money flow
+        neg_mf = money_flow.where(delta < 0, 0)  # Negative money flow
+        avg_pos_mf = pos_mf.rolling(window=MFI_PERIOD, min_periods=1).mean()
+        avg_neg_mf = neg_mf.rolling(window=MFI_PERIOD, min_periods=1).mean()
+        mfr = avg_pos_mf / (avg_neg_mf + 1e-10)  # Avoid division by zero
+        df['mfi'] = 100 - (100 / (1 + mfr))  # Normalize to a scale of 0 to 100
+        df['mfi'].fillna(100, inplace=True)  # Fill NaN values
 
     # Keep only the data range to be plotted (use pandas dates types)
     today = pd.Timestamp.now(tz='UTC').normalize()
@@ -326,6 +358,11 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         overbought = [RSI_OVERBOUGHT_LEVEL] * len(dates)
         oversold = [RSI_OVERSOLD_LEVEL] * len(dates)
         all_values = rsi + overbought + oversold
+    elif plot_type == 'mfi':
+        mfi = df['mfi'].tolist()
+        overbought = [MFI_OVERBOUGHT_LEVEL] * len(dates)
+        oversold = [MFI_OVERSOLD_LEVEL] * len(dates)
+        all_values = mfi + overbought + oversold
     elif plot_type == 'stoch':
         stoch_k = df['stoch_k'].tolist()
         stoch_d = df['stoch_d'].tolist()
@@ -370,6 +407,12 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, rsi, lc=RSI_VALUE_COLOR)
         last = f'{rsi[-1]:.2f}'
         text = f'RSI last value: {last}'
+    elif plot_type == 'mfi':
+        fig.plot(dates, overbought, lc=MFI_OVERBOUGHT_COLOR)
+        fig.plot(dates, oversold, lc=MFI_OVERSOLD_COLOR)
+        fig.plot(dates, mfi, lc=MFI_VALUE_COLOR)
+        last = f'{mfi[-1]:.2f}'
+        text = f'MFI last value: {last}'
     elif plot_type == 'stoch':
         fig.plot(dates, overbought, lc=STOCH_OVERBOUGHT_COLOR)
         fig.plot(dates, oversold, lc=STOCH_OVERSOLD_COLOR)
