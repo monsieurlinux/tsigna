@@ -105,9 +105,6 @@ def main():
                         help='display only MACD indicator')
     parser.add_argument('-n', '--no-cache', action='store_true',
                         help='bypass cache and get latest data')
-    parser.add_argument('-p', '--periods', nargs=3, type=int,
-                        default=[MOVING_AVG_1, MOVING_AVG_2, MOVING_AVG_3],
-                        help='set moving averages periods')
     parser.add_argument('-r', '--rsi', action='store_true',
                         help='display RSI indicator')
     parser.add_argument('-R', '--rsi-only', action='store_true',
@@ -137,7 +134,7 @@ def main():
     except Exception as e:
         logger.exception(f'Unexpected error: {e}')
     else:
-        df = process_data(df1, df2, args.periods, args.years, plot_name)
+        df = process_data(df1, df2, args.years, plot_name)
         if ticker2 != '' and (args.mfi or args.mfi_only):
             logger.error(f'MFI indicator not available for ratio plot')
         elif ticker2 != '' and (args.stoch or args.stoch_only):
@@ -244,7 +241,7 @@ def get_data(ticker1, ticker2, no_cache=False):
     return df1, df2
 
 
-def process_data(df1, df2, periods, years, plot_name):
+def process_data(df1, df2, years, plot_name):
     if df2.empty:
         # Only one ticker has been provided, so this is the data to plot
         df = df1
@@ -273,57 +270,15 @@ def process_data(df1, df2, periods, years, plot_name):
         df = pd.DataFrame({ 'date': dates, 'adjclose': values })
         df.set_index('date', inplace=True)
 
-    # Create new columns for the moving averages
-    df['ma1'] = df['adjclose'].rolling(window=periods[0]).mean()
-    df['ma2'] = df['adjclose'].rolling(window=periods[1]).mean()
-    df['ma3'] = df['adjclose'].rolling(window=periods[2]).mean()
-    df.fillna(0, inplace=True)
-    
-    # Create new columns for the MACD indicator
-    fast = df['adjclose'].ewm(span=MACD_FAST_LEN, adjust=False).mean()
-    slow = df['adjclose'].ewm(span=MACD_SLOW_LEN, adjust=False).mean()
-    df['macd'] = fast - slow
-    df['signal'] = df['macd'].ewm(span=MACD_SIGNAL_LEN, adjust=False).mean()
-    df['histogram'] = df['macd'] - df['signal']
-    
-    # Create a new column for the RSI indicator (Relative Strength Index)
-    # Calculate the average gain and average loss using Wilder's Smoothing
-    # We use a 'com' span of period-1 to match the standard RSI calculation
-    delta = df['adjclose'].diff()       # Difference from the previous day
-    gain = delta.where(delta > 0, 0)    # Keep gains and replace losses with 0
-    loss = -delta.where(delta < 0, 0)   # keep -losses and replace gains with 0
-    avg_gain = gain.ewm(com=RSI_PERIOD - 1, adjust=False).mean()  # Average gain
-    avg_loss = loss.ewm(com=RSI_PERIOD - 1, adjust=False).mean()  # Average loss
-    rs = avg_gain / (avg_loss + 1e-10)  # RS (avoid division by zero)
-    df['rsi'] = 100 - (100 / (1 + rs))  # RSI (normalize to a scale of 0 to 100)
-
-    # Create new columns for the Bollinger Bands indicator
-    df['sma'] = df['adjclose'].rolling(window=BB_PERIOD).mean()  # Rolling mean
-    std = df['adjclose'].rolling(window=BB_PERIOD).std() # Rolling std deviation
-    df['upper'] = df['sma'] + (std * BB_STD_DEV)  # Upper band
-    df['lower'] = df['sma'] - (std * BB_STD_DEV)  # Lower band
+    df = add_moving_averages(df)
+    df = add_macd(df)
+    df = add_rsi(df)
+    df = add_bollinger_bands(df)
 
     if 'low' in df.columns:
-        # Indicators unavailable for ratio plots because OHLC prices required
-
-        # Create new columns for the Stochastic Oscillator indicator
-        low_min = df['low'].rolling(window=STOCH_K_PERIOD).min()    # Lowest low
-        high_max = df['high'].rolling(window=STOCH_K_PERIOD).max()  # Highest high
-        fast_k = ((df['close'] - low_min) / (high_max - low_min)) * 100  # Fast
-        df['stoch_k'] = fast_k.rolling(window=STOCH_K_SMOOTHING).mean()  # Smoothed
-        df['stoch_d'] = df['stoch_k'].rolling(window=STOCH_D_PERIOD).mean() # Slow
-
-        # Create a new column for the MFI indicator (Money Flow Index)
-        typical_price = (df['high'] + df['low'] + df['close']) / 3
-        money_flow = typical_price * df['volume']
-        delta = typical_price.diff()  # Difference from the previous day
-        pos_mf = money_flow.where(delta > 0, 0)  # Positive money flow
-        neg_mf = money_flow.where(delta < 0, 0)  # Negative money flow
-        avg_pos_mf = pos_mf.rolling(window=MFI_PERIOD, min_periods=1).mean()
-        avg_neg_mf = neg_mf.rolling(window=MFI_PERIOD, min_periods=1).mean()
-        mfr = avg_pos_mf / (avg_neg_mf + 1e-10)  # Avoid division by zero
-        df['mfi'] = 100 - (100 / (1 + mfr))  # Normalize to a scale of 0 to 100
-        df['mfi'].fillna(100, inplace=True)  # Fill NaN values
+        # Indicators N/A for ratio plots (OHLC prices and/or volume required)
+        df = add_stochastics(df)
+        df = add_mfi(df)
 
     # Keep only the data range to be plotted (use pandas dates types)
     today = pd.Timestamp.now(tz='UTC').normalize()
@@ -443,6 +398,79 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     fig.text([x], [y], [text])
 
     print(fig.show(legend=False))
+
+
+def add_moving_averages(df):
+    # Calculate and add moving averages
+    df = df.copy()
+    df['ma1'] = df['adjclose'].rolling(window=MOVING_AVG_1).mean()
+    df['ma2'] = df['adjclose'].rolling(window=MOVING_AVG_2).mean()
+    df['ma3'] = df['adjclose'].rolling(window=MOVING_AVG_3).mean()
+    df = df.fillna(0)
+    return df
+    
+
+def add_macd(df):
+    # Calculate and add MACD indicator (Moving Average Convergence Divergence)
+    df = df.copy()
+    fast = df['adjclose'].ewm(span=MACD_FAST_LEN, adjust=False).mean()
+    slow = df['adjclose'].ewm(span=MACD_SLOW_LEN, adjust=False).mean()
+    df['macd'] = fast - slow
+    df['signal'] = df['macd'].ewm(span=MACD_SIGNAL_LEN, adjust=False).mean()
+    df['histogram'] = df['macd'] - df['signal']
+    return df
+    
+
+def add_rsi(df):
+    # Calculate and add RSI indicator (Relative Strength Index)
+    # Calculate the average gain and average loss using Wilder's Smoothing
+    # We use a 'com' span of period-1 to match the standard RSI calculation
+    df = df.copy()
+    delta = df['adjclose'].diff()       # Difference from the previous day
+    gain = delta.where(delta > 0, 0)    # Keep gains and replace losses with 0
+    loss = -delta.where(delta < 0, 0)   # keep -losses and replace gains with 0
+    avg_gain = gain.ewm(com=RSI_PERIOD - 1, adjust=False).mean()  # Average gain
+    avg_loss = loss.ewm(com=RSI_PERIOD - 1, adjust=False).mean()  # Average loss
+    rs = avg_gain / (avg_loss + 1e-10)  # RS (avoid division by zero)
+    df['rsi'] = 100 - (100 / (1 + rs))  # RSI (normalize to a scale of 0 to 100)
+    return df
+
+
+def add_mfi(df):
+    # Calculate and add MFI indicator (Money Flow Index)
+    df = df.copy()
+    typical_price = (df['high'] + df['low'] + df['close']) / 3
+    money_flow = typical_price * df['volume']
+    delta = typical_price.diff()  # Difference from the previous day
+    pos_mf = money_flow.where(delta > 0, 0)  # Positive money flow
+    neg_mf = money_flow.where(delta < 0, 0)  # Negative money flow
+    avg_pos_mf = pos_mf.rolling(window=MFI_PERIOD, min_periods=1).mean()
+    avg_neg_mf = neg_mf.rolling(window=MFI_PERIOD, min_periods=1).mean()
+    mfr = avg_pos_mf / (avg_neg_mf + 1e-10)  # Avoid division by zero
+    df['mfi'] = 100 - (100 / (1 + mfr))  # Normalize to a scale of 0 to 100
+    df['mfi'] = df['mfi'].fillna(100)  # Fill NaN values
+    return df
+
+
+def add_stochastics(df):
+    # Calculate and add Stochastic Oscillator indicator
+    df = df.copy()
+    low_min = df['low'].rolling(window=STOCH_K_PERIOD).min()    # Lowest low
+    high_max = df['high'].rolling(window=STOCH_K_PERIOD).max()  # Highest high
+    fast_k = ((df['close'] - low_min) / (high_max - low_min)) * 100  # Fast
+    df['stoch_k'] = fast_k.rolling(window=STOCH_K_SMOOTHING).mean()  # Smoothed
+    df['stoch_d'] = df['stoch_k'].rolling(window=STOCH_D_PERIOD).mean() # Slow
+    return df
+
+
+def add_bollinger_bands(df):
+    # Calculate and add Bollinger Bands indicator
+    df = df.copy()
+    df['sma'] = df['adjclose'].rolling(window=BB_PERIOD).mean()  # Rolling mean
+    std = df['adjclose'].rolling(window=BB_PERIOD).std() # Rolling std deviation
+    df['upper'] = df['sma'] + (std * BB_STD_DEV)  # Upper band
+    df['lower'] = df['sma'] - (std * BB_STD_DEV)  # Lower band
+    return df
 
 
 def log_data_frame(df, description):

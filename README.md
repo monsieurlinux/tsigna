@@ -74,7 +74,6 @@ python3 tsigna.py [arguments] ticker1 [ticker2]
 | `--macd`        | `-m`       | Display MACD indicator                 | `False`         |
 | `--macd-only`   | `-M`       | Display **only** MACD indicator        | `False`         |
 | `--no-cache`    | `-n`       | Bypass cache and get latest data       | `False`         |
-| `--periods`     | `-p`       | Set moving averages periods            | `[20, 50, 100]` |
 | `--rsi`         | `-r`       | Display RSI indicator                  | `False`         |
 | `--rsi-only`    | `-R`       | Display **only** RSI indicator         | `False`         |
 | `--stoch`       | `-s`       | Display Stochastics indicator          | `False`         |
@@ -99,6 +98,6 @@ This project is licensed under the MIT License. See the [LICENSE](LICENSE) file 
 
 ## Acknowledgements
 
-Tsigna is not doing much more than getting data from [yahooquery](https://github.com/dpguthrie/yahooquery), processing it with [pandas](https://github.com/pandas-dev/pandas), and plotting it with [plotille](https://github.com/tammoippen/plotille), so thanks to the creators and contributors of these great libraries for making it possible.
+Tsigna is not doing much more than getting data from [yahooquery](https://github.com/dpguthrie/yahooquery), processing it with [pandas](https://github.com/pandas-dev/pandas), and plotting it with [plotille](https://github.com/tammoippen/plotille), so thanks to the creators and contributors of these powerful libraries for making it possible.
 
 Thanks also to the [ticker](https://github.com/achannarasappa/ticker) tool, which is very useful to track prices in real time from the terminal.
