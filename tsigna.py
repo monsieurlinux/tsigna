@@ -127,9 +127,9 @@ logger = logging.getLogger(__name__)
 def main():
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('ticker1', nargs='?', default='',
+    parser.add_argument('ticker1', nargs='?',
                         help='first or only ticker (or special MMRI ticker)')
-    parser.add_argument('ticker2', nargs='?', default='',
+    parser.add_argument('ticker2', nargs='?',
                         help='second ticker for ratio plot')
     parser.add_argument('-a', '--atr', action='store_true',
                         help='display ATR indicator')
@@ -165,22 +165,24 @@ def main():
                         help='set years to plot, use 0 for ytd (default: 1)')
     args = parser.parse_args()
     
+    ticker1, ticker2, plot_name = get_tickers_and_plot_name(args)
+
     if args.indicator_info:
         # User asked for indicator information
         print_indicator_info()
         return
-    elif args.ticker1 == '':
+    elif not ticker1:
         # User did not ask for information nor provide a ticker
         parser.print_usage()
         logger.error(f'Please provide a ticker or use -i for indicator information')
         return
-    elif args.ticker2 != '' and (args.mfi or args.mfi_only):
+    elif ticker2 and (args.mfi or args.mfi_only):
         logger.error(f'MFI indicator not available for ratio plot')
         return
-    elif args.ticker2 != '' and (args.stoch or args.stoch_only):
+    elif ticker2 and (args.stoch or args.stoch_only):
         logger.error(f'Stochastics indicator not available for ratio plot')
         return
-    elif args.ticker2 != '' and (args.atr or args.atr_only):
+    elif ticker2 and (args.atr or args.atr_only):
         logger.error(f'ATR indicator not available for ratio plot')
         return
 
@@ -192,8 +194,6 @@ def main():
     if args.mfi or args.mfi_only: xtra_ind.append('mfi')
     if args.stoch or args.stoch_only: xtra_ind.append('stoch')
     if args.atr or args.atr_only: xtra_ind.append('atr')
-
-    ticker1, ticker2, plot_name = get_tickers_and_plot_name(args)
 
     try:
         df1, df2 = get_data(ticker1, ticker2, no_cache=args.no_cache)
@@ -235,19 +235,19 @@ def main():
 
 
 def get_tickers_and_plot_name(args):
-    ticker1 = args.ticker1.lower()
-    ticker2 = args.ticker2.lower()
+    ticker1 = args.ticker1.upper() if args.ticker1 else None
+    ticker2 = args.ticker2.upper() if args.ticker2 else None
+    plot_name = None
 
-    if ticker2 != '':
+    if ticker1 and ticker2:
         # Plot the ratio between ticker1 and ticker2
-        plot_name = ticker1.upper() + ' vs ' + ticker2.upper()
-    else:
-        plot_name = ticker1.upper()
-        if ticker1 == 'mmri':
+        plot_name = ticker1 + ' vs ' + ticker2
+    elif ticker1:
+        plot_name = ticker1
+        if ticker1 == 'MMRI':
             # Special "ticker" to plot the Mannarino Market Risk Indicator
-            ticker1 = 'dx=f'
-            ticker2 = '^tnx'  # '10y=f' has no historical data
-            plot_name = 'MMRI'
+            ticker1 = 'DX=F'
+            ticker2 = '^TNX'  # '10Y=F' has no historical data
 
     return ticker1, ticker2, plot_name
 
@@ -256,8 +256,8 @@ def get_data(ticker1, ticker2, no_cache=False):
     fetch_data = True
     df2 = pd.DataFrame()
     CACHE_PATH.mkdir(parents=True, exist_ok=True)
-    path1 = Path(f'{CACHE_PATH}/{ticker1}.csv')
-    path2 = Path(f'{CACHE_PATH}/{ticker2}.csv')
+    path1 = Path(f'{CACHE_PATH}/{ticker1.lower()}.csv') if ticker1 else None
+    path2 = Path(f'{CACHE_PATH}/{ticker2.lower()}.csv') if ticker2 else None
 
     if CACHE_ENABLE and not no_cache:
         fetch_data = False
@@ -270,7 +270,7 @@ def get_data(ticker1, ticker2, no_cache=False):
         else:
             fetch_data = True
         
-        if ticker2 != '':
+        if ticker2:
             if path2.is_file() and (now - path2.stat().st_mtime < CACHE_EXPIRY):
                 logger.info(f'Getting {ticker2} data from cache')
                 df2 = pd.read_csv(path2, parse_dates=['date'])
@@ -280,14 +280,14 @@ def get_data(ticker1, ticker2, no_cache=False):
 
     if fetch_data:
         logger.info('Getting ticker(s) data from Yahoo Finance')
-        tickers = [ticker1, ticker2] if ticker2 != '' else [ticker1]       
+        tickers = [ticker1, ticker2] if ticker2 else [ticker1]       
         tickers = Ticker(tickers)
 
         df = tickers.history(period='10y', interval='1d')
         df1 = df.loc[ticker1]
         if CACHE_ENABLE: df1.to_csv(path1, index=True)
 
-        if ticker2 != '':
+        if ticker2:
             df2 = df.loc[ticker2]
             if CACHE_ENABLE: df2.to_csv(path2, index=True)
 
