@@ -122,6 +122,13 @@ def main():
     args = parser.parse_args()
     
     ticker1, ticker2, plot_name = get_tickers_and_plot_name(args)
+    main_ind = 'bb' if args.bollinger else 'ma'
+    xtra_ind = []
+    if args.volume: xtra_ind.append('vol')
+    if args.macd: xtra_ind.append('macd')
+    if args.rsi: xtra_ind.append('rsi')
+    if args.mfi: xtra_ind.append('mfi')
+    if args.stoch: xtra_ind.append('stoch')
 
     try:
         df1, df2 = get_data(ticker1, ticker2, no_cache=args.no_cache)
@@ -134,7 +141,7 @@ def main():
     except Exception as e:
         logger.exception(f'Unexpected error: {e}')
     else:
-        df = process_data(df1, df2, args.years, plot_name)
+        df = process_data(df1, df2, args.years, plot_name, main_ind, xtra_ind)
         if ticker2 != '' and (args.mfi or args.mfi_only):
             logger.error(f'MFI indicator not available for ratio plot')
         elif ticker2 != '' and (args.stoch or args.stoch_only):
@@ -150,26 +157,18 @@ def main():
         elif args.stoch_only:
             plot_data(df, plot_name, 'stoch')
         else:
-            main_plot = 'bb' if args.bollinger else 'ma'
-            indicators = []
-            if args.volume: indicators.append('vol')
-            if args.macd: indicators.append('macd')
-            if args.rsi: indicators.append('rsi')
-            if args.mfi: indicators.append('mfi')
-            if args.stoch: indicators.append('stoch')
-            num_ind = len(indicators)
-            
+            num_ind = len(xtra_ind)
             if num_ind > 2:
                 logger.error(f'A maximum of two indicators can be displayed')
             elif num_ind == 2:
-                plot_data(df, plot_name, main_plot, 1-2*INDICATOR_HEIGHT_RATIO)
-                plot_data(df, plot_name, indicators[0], INDICATOR_HEIGHT_RATIO)
-                plot_data(df, plot_name, indicators[1], INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, main_ind, 1-2*INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, xtra_ind[0], INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, xtra_ind[1], INDICATOR_HEIGHT_RATIO)
             elif num_ind == 1:
-                plot_data(df, plot_name, main_plot, 1-INDICATOR_HEIGHT_RATIO)
-                plot_data(df, plot_name, indicators[0], INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, main_ind, 1-INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, xtra_ind[0], INDICATOR_HEIGHT_RATIO)
             else:
-                plot_data(df, plot_name, main_plot)
+                plot_data(df, plot_name, main_ind)
 
 
 def get_tickers_and_plot_name(args):
@@ -231,8 +230,8 @@ def get_data(ticker1, ticker2, no_cache=False):
 
     # Make sure all dates have the same format (remove time from last date)
     # normalize() sets the time to midnight while keeping pandas dates types
-    df1.index = pd.to_datetime(df1.index, utc=True, format='ISO8601').normalize()
-    df2.index = pd.to_datetime(df2.index, utc=True, format='ISO8601').normalize()
+    df1.index = pd.to_datetime(df1.index,utc=True,format='ISO8601').normalize()
+    df2.index = pd.to_datetime(df2.index,utc=True,format='ISO8601').normalize()
     assert df1.index.is_unique, f'Duplicate date for {ticker1}'
     assert df2.index.is_unique, f'Duplicate date for {ticker2}'
     df1 = df1.groupby(df1.index).last()  # Make sure there are no duplicates
@@ -241,12 +240,12 @@ def get_data(ticker1, ticker2, no_cache=False):
     return df1, df2
 
 
-def process_data(df1, df2, years, plot_name):
+def process_data(df1, df2, years, plot_name, main_ind, xtra_ind):
     if df2.empty:
         # Only one ticker has been provided, so this is the data to plot
         df = df1
     else:
-        # Compute the ratios between the two tickers
+        # Two tickers has been provided, so compute the ratios between them
         dates = []
         values = []
 
@@ -270,15 +269,16 @@ def process_data(df1, df2, years, plot_name):
         df = pd.DataFrame({ 'date': dates, 'adjclose': values })
         df.set_index('date', inplace=True)
 
-    df = add_moving_averages(df)
-    df = add_macd(df)
-    df = add_rsi(df)
-    df = add_bollinger_bands(df)
+    # Calculate and add columns for requested indicators
+    if 'ma' in main_ind: df = add_moving_averages(df)
+    if 'bb' in main_ind: df = add_bollinger_bands(df)
+    if 'macd' in xtra_ind: df = add_macd(df)
+    if 'rsi' in xtra_ind: df = add_rsi(df)
 
     if 'low' in df.columns:
         # Indicators N/A for ratio plots (OHLC prices and/or volume required)
-        df = add_stochastics(df)
-        df = add_mfi(df)
+        if 'mfi' in xtra_ind: df = add_mfi(df)
+        if 'stoch' in xtra_ind: df = add_stochastics(df)
 
     # Keep only the data range to be plotted (use pandas dates types)
     today = pd.Timestamp.now(tz='UTC').normalize()
@@ -479,7 +479,7 @@ def log_data_frame(df, description):
     #logger.debug(f'DataFrame index data type: {df.index.dtype}')
     #logger.debug(f'DataFrame index class: {type(df.index)}')
     #logger.debug(f'DataFrame columns data types\n{df.dtypes}')
-    #logger.debug(f'DataFrame statistics\n{df.describe()}')  # Mean, min, max, etc.
+    #logger.debug(f'DataFrame statistics\n{df.describe()}')  # Mean, min, max...
     sys.exit()
 
 
