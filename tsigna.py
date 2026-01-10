@@ -246,6 +246,7 @@ def get_tickers_and_plot_name(args):
         plot_name = ticker1
         if ticker1 == 'MMRI':
             # Special "ticker" to plot the Mannarino Market Risk Indicator
+            # MMRI = DX * 10Y / 1.61
             ticker1 = 'DX=F'
             ticker2 = '^TNX'  # '10Y=F' has no historical data
 
@@ -309,28 +310,25 @@ def process_data(df1, df2, years, plot_name, main_ind, xtra_ind):
         df = df1
     else:
         # Two tickers has been provided, so compute the ratios between them
-        dates = []
-        values = []
+        # Align the indices by finding dates present in both DataFrames
+        dates = df1.index.unique().intersection(df2.index)
 
-        # TODO : Iterating through the index is not idiomatic pandas. A better
-        # way would be to align the two DF and perform a vectorized operation.
-        for date in df1.index.unique():
-            if date in df2.index:
-                # .at is better than .loc for single value
-                value1 = df1.at[date, 'adjclose']
-                value2 = df2.at[date, 'adjclose']
-            
-                if value1 > 0 and value2 > 0:
-                    dates.append(date)
-                    if plot_name == 'MMRI':
-                        # mmri = dx * 10y / 1.61
-                        values.append(value1 * value2 / MMRI_DIVISOR)
-                    else:
-                        values.append(value1 / value2)
+        # Extract the series for 'adjclose' only for the common dates
+        values1 = df1.loc[dates, 'adjclose']
+        values2 = df2.loc[dates, 'adjclose']
 
-        # Create the pair dataframe
-        df = pd.DataFrame({ 'date': dates, 'adjclose': values })
-        df.set_index('date', inplace=True)
+        # Filter out dates where values are not positive
+        valid_mask = (values1 > 0) & (values2 > 0)
+        values1 = values1[valid_mask]
+        values2 = values2[valid_mask]
+
+        # Calculate the values using vectorized operations
+        if plot_name == 'MMRI':
+            values = (values1 * values2) / MMRI_DIVISOR
+        else:
+            values = values1 / values2
+
+        df = values.to_frame('adjclose')
 
     # Calculate and add columns for requested indicators
     if 'ma' in main_ind: df = add_moving_averages(df)
@@ -570,7 +568,7 @@ def print_indicator_info():
     print()
 
 
-def log_data_frame(df, description):
+def log_data_frame(df, description = ''):
     """ This function is used only for debugging. """
     logger.debug(f'DataFrame {description}\n{df}')
     #logger.debug(f'DataFrame index data type: {df.index.dtype}')
