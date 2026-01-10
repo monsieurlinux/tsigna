@@ -35,12 +35,14 @@ from yahooquery import Ticker  # Alternative fork: ybankinplay
 CACHE_ENABLE = True
 CACHE_PATH = Path.home() / f'.{Path(__file__).stem}'
 CACHE_EXPIRY = 300  # 300 seconds = 5 minutes
-MOVING_AVG_1 = 20
-MOVING_AVG_2 = 50
-MOVING_AVG_3 = 200
 YEARS_TO_PLOT = 1
 INDICATOR_HEIGHT_RATIO = 0.3
 MMRI_DIVISOR = 1.61
+MOVING_AVG_1 = 20
+MOVING_AVG_2 = 50
+MOVING_AVG_3 = 200
+BB_PERIOD = 20
+BB_STD_DEV = 2
 MACD_FAST_LEN = 12
 MACD_SLOW_LEN = 26
 MACD_SIGNAL_LEN = 9
@@ -50,13 +52,12 @@ RSI_OVERSOLD_LEVEL = 30
 MFI_PERIOD = 14
 MFI_OVERBOUGHT_LEVEL = 80
 MFI_OVERSOLD_LEVEL = 20
-BB_PERIOD = 20
-BB_STD_DEV = 2
 STOCH_K_PERIOD = 14
 STOCH_K_SMOOTHING = 3  # Set to 1 for fast stochastics
 STOCH_D_PERIOD = 3
 STOCH_OVERBOUGHT_LEVEL = 80
 STOCH_OVERSOLD_LEVEL = 20
+ATR_PERIOD = 14
 
 # Valid terminal plots colors (standard 8-color ANSI palette):
 # black, red, green, yellow, blue, magenta, cyan, and white
@@ -64,6 +65,9 @@ PRICE_RATIO_COLOR = 'blue'
 MOVING_AVG_1_COLOR = 'green'
 MOVING_AVG_2_COLOR = 'yellow'
 MOVING_AVG_3_COLOR = 'red'
+BB_SMA_COLOR = 'cyan'
+BB_UPPER_BAND_COLOR = 'red'
+BB_LOWER_BAND_COLOR = 'green'
 VOLUME_VALUE_COLOR = 'blue'
 MACD_VALUE_COLOR = 'blue'
 MACD_SIGNAL_COLOR = 'red'
@@ -74,13 +78,11 @@ RSI_OVERSOLD_COLOR = 'green'
 MFI_VALUE_COLOR = 'blue'
 MFI_OVERBOUGHT_COLOR = 'red'
 MFI_OVERSOLD_COLOR = 'green'
-BB_SMA_COLOR = 'cyan'
-BB_UPPER_BAND_COLOR = 'red'
-BB_LOWER_BAND_COLOR = 'green'
 STOCH_K_COLOR = 'blue'
 STOCH_D_COLOR = 'red'
 STOCH_OVERBOUGHT_COLOR = 'red'
 STOCH_OVERSOLD_COLOR = 'green'
+ATR_VALUE_COLOR = 'blue'
 
 # Get a logger for this script
 logger = logging.getLogger(__name__)
@@ -93,6 +95,10 @@ def main():
                         help='first or only ticker (or special MMRI ticker)')
     parser.add_argument('ticker2', nargs='?', default='',
                         help='second ticker for ratio plot')
+    parser.add_argument('-a', '--atr', action='store_true',
+                        help='display ATR indicator')
+    parser.add_argument('-A', '--atr-only', action='store_true',
+                        help='display only ATR indicator')
     parser.add_argument('-b', '--bollinger', action='store_true',
                         help='display Bollinger Bands indicator')
     parser.add_argument('-f', '--mfi', action='store_true',
@@ -124,11 +130,12 @@ def main():
     ticker1, ticker2, plot_name = get_tickers_and_plot_name(args)
     main_ind = 'bb' if args.bollinger else 'ma'
     xtra_ind = []
-    if args.volume: xtra_ind.append('vol')
-    if args.macd: xtra_ind.append('macd')
-    if args.rsi: xtra_ind.append('rsi')
-    if args.mfi: xtra_ind.append('mfi')
-    if args.stoch: xtra_ind.append('stoch')
+    if args.volume or args.volume_only: xtra_ind.append('vol')
+    if args.macd or args.macd_only: xtra_ind.append('macd')
+    if args.rsi or args.rsi_only: xtra_ind.append('rsi')
+    if args.mfi or args.mfi_only: xtra_ind.append('mfi')
+    if args.stoch or args.stoch_only: xtra_ind.append('stoch')
+    if args.atr or args.atr_only: xtra_ind.append('atr')
 
     try:
         df1, df2 = get_data(ticker1, ticker2, no_cache=args.no_cache)
@@ -146,6 +153,8 @@ def main():
             logger.error(f'MFI indicator not available for ratio plot')
         elif ticker2 != '' and (args.stoch or args.stoch_only):
             logger.error(f'Stochastics indicator not available for ratio plot')
+        elif ticker2 != '' and (args.atr or args.atr_only):
+            logger.error(f'ATR indicator not available for ratio plot')
         elif args.volume_only:
             plot_data(df, plot_name, 'vol')
         elif args.macd_only:
@@ -156,6 +165,8 @@ def main():
             plot_data(df, plot_name, 'mfi')
         elif args.stoch_only:
             plot_data(df, plot_name, 'stoch')
+        elif args.atr_only:
+            plot_data(df, plot_name, 'atr')
         else:
             num_ind = len(xtra_ind)
             if num_ind > 2:
@@ -279,6 +290,7 @@ def process_data(df1, df2, years, plot_name, main_ind, xtra_ind):
         # Indicators N/A for ratio plots (OHLC prices and/or volume required)
         if 'mfi' in xtra_ind: df = add_mfi(df)
         if 'stoch' in xtra_ind: df = add_stochastics(df)
+        if 'atr' in xtra_ind: df = add_atr(df)
 
     # Keep only the data range to be plotted (use pandas dates types)
     today = pd.Timestamp.now(tz='UTC').normalize()
@@ -324,6 +336,9 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         overbought = [STOCH_OVERBOUGHT_LEVEL] * len(dates)
         oversold = [STOCH_OVERSOLD_LEVEL] * len(dates)
         all_values = stoch_k + stoch_d + overbought + oversold
+    elif plot_type == 'atr':
+        atr = df['atr'].tolist()
+        all_values = atr
     elif plot_type == 'bb':
         close = df['adjclose'].tolist()
         sma = df['sma'].tolist()
@@ -375,6 +390,10 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, stoch_d, lc=STOCH_D_COLOR)
         last = f'{stoch_d[-1]:.2f}'
         text = f'Stochastics last value: {last}'
+    elif plot_type == 'atr':
+        fig.plot(dates, atr, lc=ATR_VALUE_COLOR)
+        last = f'{atr[-1]:.2f}'
+        text = f'ATR last value: {last}'
     elif plot_type == 'bb':
         fig.plot(dates, close, lc=PRICE_RATIO_COLOR)
         fig.plot(dates, sma, lc=BB_SMA_COLOR)
@@ -429,8 +448,8 @@ def add_rsi(df):
     delta = df['adjclose'].diff()       # Difference from the previous day
     gain = delta.where(delta > 0, 0)    # Keep gains and replace losses with 0
     loss = -delta.where(delta < 0, 0)   # keep -losses and replace gains with 0
-    avg_gain = gain.ewm(com=RSI_PERIOD - 1, adjust=False).mean()  # Average gain
-    avg_loss = loss.ewm(com=RSI_PERIOD - 1, adjust=False).mean()  # Average loss
+    avg_gain = gain.ewm(com=RSI_PERIOD-1, adjust=False).mean()  # Average gain
+    avg_loss = loss.ewm(com=RSI_PERIOD-1, adjust=False).mean()  # Average loss
     rs = avg_gain / (avg_loss + 1e-10)  # RS (avoid division by zero)
     df['rsi'] = 100 - (100 / (1 + rs))  # RSI (normalize to a scale of 0 to 100)
     return df
@@ -470,6 +489,17 @@ def add_bollinger_bands(df):
     std = df['adjclose'].rolling(window=BB_PERIOD).std() # Rolling std deviation
     df['upper'] = df['sma'] + (std * BB_STD_DEV)  # Upper band
     df['lower'] = df['sma'] - (std * BB_STD_DEV)  # Lower band
+    return df
+
+
+def add_atr(df):
+    # Calculate and add ATR indicator (Average True Range)
+    df = df.copy()
+    tr1 = df['high'] - df['low']                        # high - low
+    tr2 = (df['high'] - df['close'].shift()).abs()      # high - previous close
+    tr3 = (df['low'] - df['close'].shift()).abs()       # low - previous close
+    tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1) # Max of the 3 components
+    df['atr'] = tr.ewm(com=ATR_PERIOD-1, adjust=False).mean() # Wilder's Smoothing
     return df
 
 

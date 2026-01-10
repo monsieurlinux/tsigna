@@ -69,6 +69,8 @@ python3 tsigna.py [arguments] ticker1 [ticker2]
 | --------------- | ---------- | -------------------------------------- | --------------- |
 | `--help`        | `-h`       | Show help message                      |                 |
 | `--bollinger`   | `-b`       | Display Bollinger Bands indicator      | `False`         |
+| `--atr`         | `-a`       | Display ATR indicator                  | `False`         |
+| `--atr-only`    | `-A`       | Display **only** ATR indicator         | `False`         |
 | `--mfi`         | `-f`       | Display MFI indicator                  | `False`         |
 | `--mfi-only`    | `-F`       | Display **only** MFI indicator         | `False`         |
 | `--macd`        | `-m`       | Display MACD indicator                 | `False`         |
