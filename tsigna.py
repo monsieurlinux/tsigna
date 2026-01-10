@@ -24,6 +24,7 @@ from pathlib import Path
 import requests
 import shutil
 import sys
+import textwrap
 import time
 
 # Third-party library imports
@@ -84,14 +85,49 @@ STOCH_OVERBOUGHT_COLOR = 'red'
 STOCH_OVERSOLD_COLOR = 'green'
 ATR_VALUE_COLOR = 'blue'
 
+INDICATOR_INFO = {
+    "ATR (Average True Range)": {
+        "category": "Volatility",
+        "usage": "Measures market volatility by decomposing the entire range of an asset price for that period. Use it to set stop-loss levels (placing them wider than the ATR) or to determine position sizing based on current market noise."
+    },
+    "Bollinger Bands": {
+        "category": "Volatility",
+        "usage": "Consists of a middle band (SMA) and two outer bands that expand and contract based on volatility. Use it to identify overbought/oversold conditions (price near bands) and potential breakouts after periods of low volatility (squeeze)."
+    },
+    "MACD (Moving Average Convergence Divergence)": {
+        "category": "Trend / Momentum",
+        "usage": "Shows the relationship between two moving averages. Look for signal line crossovers to identify trend direction and divergences (where price moves opposite to the indicator) to spot potential reversals."
+    },
+    "MFI (Money Flow Index)": {
+        "category": "Momentum Oscillator",
+        "usage": "Incorporates both price and volume data to measure buying and selling pressure. Use it like RSI to identify overbought/oversold levels, but rely on it more heavily as volume-driven divergence is often a stronger signal."
+    },
+    "Moving Averages": {
+        "category": "Trend",
+        "usage": "Smooths out price data to identify the direction of the trend. Use it to determine entry points (e.g., buy when price crosses above the line) or dynamic support/resistance levels."
+    },
+    "OBV (On-Balance Volume)": {
+        "category": "Volume",
+        "usage": "A cumulative indicator that adds volume on up days and subtracts volume on down days. Use it to confirm the strength of a trend (e.g., rising price + rising OBV = strong trend) or spot reversals via divergence."
+    },
+    "RSI (Relative Strength Index)": {
+        "category": "Momentum Oscillator",
+        "usage": "Measures the speed and change of price movements on a scale of 0 to 100. Use it to identify overbought conditions (above 70) or oversold conditions (below 30) and to spot bullish or bearish divergences."
+    },
+    "Stochastics": {
+        "category": "Momentum Oscillator",
+        "usage": "Compares a particular closing price of an asset to a range of its prices over a certain period of time. Look for the lines to cross in overbought (above 80) or oversold (below 20) areas to time reversals."
+    },
+}
+
 # Get a logger for this script
 logger = logging.getLogger(__name__)
 
 
 def main():
-    parser = argparse.ArgumentParser(
-                      formatter_class=argparse.ArgumentDefaultsHelpFormatter)
-    parser.add_argument('ticker1',
+    parser = argparse.ArgumentParser()
+
+    parser.add_argument('ticker1', nargs='?', default='',
                         help='first or only ticker (or special MMRI ticker)')
     parser.add_argument('ticker2', nargs='?', default='',
                         help='second ticker for ratio plot')
@@ -105,6 +141,8 @@ def main():
                         help='display MFI indicator')
     parser.add_argument('-F', '--mfi-only', action='store_true',
                         help='display only MFI indicator')
+    parser.add_argument('-i', '--indicator-info', action='store_true',
+                        help='show indicator information')
     parser.add_argument('-m', '--macd', action='store_true',
                         help='display MACD indicator')
     parser.add_argument('-M', '--macd-only', action='store_true',
@@ -124,10 +162,28 @@ def main():
     parser.add_argument('-V', '--volume-only', action='store_true',
                         help='display only volume')
     parser.add_argument('-y', '--years', type=int, default=YEARS_TO_PLOT,
-                        help='set years to plot, use 0 for ytd')
+                        help='set years to plot, use 0 for ytd (default: 1)')
     args = parser.parse_args()
     
-    ticker1, ticker2, plot_name = get_tickers_and_plot_name(args)
+    if args.indicator_info:
+        # User asked for indicator information
+        print_indicator_info()
+        return
+    elif args.ticker1 == '':
+        # User did not ask for information nor provide a ticker
+        parser.print_usage()
+        logger.error(f'Please provide a ticker or use -i for indicator information')
+        return
+    elif args.ticker2 != '' and (args.mfi or args.mfi_only):
+        logger.error(f'MFI indicator not available for ratio plot')
+        return
+    elif args.ticker2 != '' and (args.stoch or args.stoch_only):
+        logger.error(f'Stochastics indicator not available for ratio plot')
+        return
+    elif args.ticker2 != '' and (args.atr or args.atr_only):
+        logger.error(f'ATR indicator not available for ratio plot')
+        return
+
     main_ind = 'bb' if args.bollinger else 'ma'
     xtra_ind = []
     if args.volume or args.volume_only: xtra_ind.append('vol')
@@ -136,6 +192,8 @@ def main():
     if args.mfi or args.mfi_only: xtra_ind.append('mfi')
     if args.stoch or args.stoch_only: xtra_ind.append('stoch')
     if args.atr or args.atr_only: xtra_ind.append('atr')
+
+    ticker1, ticker2, plot_name = get_tickers_and_plot_name(args)
 
     try:
         df1, df2 = get_data(ticker1, ticker2, no_cache=args.no_cache)
@@ -149,13 +207,7 @@ def main():
         logger.exception(f'Unexpected error: {e}')
     else:
         df = process_data(df1, df2, args.years, plot_name, main_ind, xtra_ind)
-        if ticker2 != '' and (args.mfi or args.mfi_only):
-            logger.error(f'MFI indicator not available for ratio plot')
-        elif ticker2 != '' and (args.stoch or args.stoch_only):
-            logger.error(f'Stochastics indicator not available for ratio plot')
-        elif ticker2 != '' and (args.atr or args.atr_only):
-            logger.error(f'ATR indicator not available for ratio plot')
-        elif args.volume_only:
+        if args.volume_only:
             plot_data(df, plot_name, 'vol')
         elif args.macd_only:
             plot_data(df, plot_name, 'macd')
@@ -501,6 +553,21 @@ def add_atr(df):
     tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1) # Max of the 3 components
     df['atr'] = tr.ewm(com=ATR_PERIOD-1, adjust=False).mean() # Wilder's Smoothing
     return df
+
+
+def print_indicator_info():
+    width = shutil.get_terminal_size()[0]
+    indent = ' ' * 4
+    
+    for name, data in INDICATOR_INFO.items():
+        print(f"\n{name.upper()}")
+        desc = f"{data['category']} Indicator - {data['usage'].strip()}"
+        wrapper = textwrap.TextWrapper(width=width, initial_indent=indent,
+                                       subsequent_indent=indent)
+        output = wrapper.fill(desc)
+        print(output)
+
+    print()
 
 
 def log_data_frame(df, description):
