@@ -77,6 +77,8 @@ python3 tsigna.py [arguments] ticker1 [ticker2]
 | `--macd`           | `-m`       | Display MACD indicator                        |
 | `--macd-only`      | `-M`       | Display **only** MACD indicator               |
 | `--no-cache`       | `-n`       | Bypass cache and get latest data              |
+| `--obv`            | `-o`       | Display OBV indicator                         |
+| `--obv-only`       | `-O`       | Display **only** OBV indicator                |
 | `--rsi`            | `-r`       | Display RSI indicator                         |
 | `--rsi-only`       | `-R`       | Display **only** RSI indicator                |
 | `--stoch`          | `-s`       | Display Stochastics indicator                 |

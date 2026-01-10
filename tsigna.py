@@ -84,6 +84,7 @@ STOCH_D_COLOR = 'red'
 STOCH_OVERBOUGHT_COLOR = 'red'
 STOCH_OVERSOLD_COLOR = 'green'
 ATR_VALUE_COLOR = 'blue'
+OBV_VALUE_COLOR = 'blue'
 
 INDICATOR_INFO = {
     "ATR (Average True Range)": {
@@ -149,6 +150,10 @@ def main():
                         help='display only MACD indicator')
     parser.add_argument('-n', '--no-cache', action='store_true',
                         help='bypass cache and get latest data')
+    parser.add_argument('-o', '--obv', action='store_true',
+                        help='display OBV indicator')
+    parser.add_argument('-O', '--obv-only', action='store_true',
+                        help='display only OBV indicator')
     parser.add_argument('-r', '--rsi', action='store_true',
                         help='display RSI indicator')
     parser.add_argument('-R', '--rsi-only', action='store_true',
@@ -185,6 +190,9 @@ def main():
     elif ticker2 and (args.atr or args.atr_only):
         logger.error(f'ATR indicator not available for ratio plot')
         return
+    elif ticker2 and (args.obv or args.obv_only):
+        logger.error(f'OBV indicator not available for ratio plot')
+        return
 
     main_ind = 'bb' if args.bollinger else 'ma'
     xtra_ind = []
@@ -194,6 +202,7 @@ def main():
     if args.mfi or args.mfi_only: xtra_ind.append('mfi')
     if args.stoch or args.stoch_only: xtra_ind.append('stoch')
     if args.atr or args.atr_only: xtra_ind.append('atr')
+    if args.obv or args.obv_only: xtra_ind.append('obv')
 
     try:
         df1, df2 = get_data(ticker1, ticker2, no_cache=args.no_cache)
@@ -219,6 +228,8 @@ def main():
             plot_data(df, plot_name, 'stoch')
         elif args.atr_only:
             plot_data(df, plot_name, 'atr')
+        elif args.obv_only:
+            plot_data(df, plot_name, 'obv')
         else:
             num_ind = len(xtra_ind)
             if num_ind > 2:
@@ -341,6 +352,7 @@ def process_data(df1, df2, years, plot_name, main_ind, xtra_ind):
         if 'mfi' in xtra_ind: df = add_mfi(df)
         if 'stoch' in xtra_ind: df = add_stochastics(df)
         if 'atr' in xtra_ind: df = add_atr(df)
+        if 'obv' in xtra_ind: df = add_obv(df)
 
     # Keep only the data range to be plotted (use pandas dates types)
     today = pd.Timestamp.now(tz='UTC').normalize()
@@ -389,6 +401,9 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     elif plot_type == 'atr':
         atr = df['atr'].tolist()
         all_values = atr
+    elif plot_type == 'obv':
+        obv = df['obv'].tolist()
+        all_values = obv
     elif plot_type == 'bb':
         close = df['adjclose'].tolist()
         sma = df['sma'].tolist()
@@ -444,6 +459,10 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, atr, lc=ATR_VALUE_COLOR)
         last = f'{atr[-1]:.2f}'
         text = f'ATR last value: {last}'
+    elif plot_type == 'obv':
+        fig.plot(dates, obv, lc=OBV_VALUE_COLOR)
+        last = f'{obv[-1]:.0f}'
+        text = f'OBV last value: {last}'
     elif plot_type == 'bb':
         fig.plot(dates, close, lc=PRICE_RATIO_COLOR)
         fig.plot(dates, sma, lc=BB_SMA_COLOR)
@@ -550,6 +569,17 @@ def add_atr(df):
     tr3 = (df['low'] - df['close'].shift()).abs()       # low - previous close
     tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1) # Max of the 3 components
     df['atr'] = tr.ewm(com=ATR_PERIOD-1, adjust=False).mean() # Wilder's Smoothing
+    return df
+
+
+def add_obv(df):
+    # Calculate and add OBV indicator (On-Balance Volume)
+    df = df.copy()
+    price_change = df['adjclose'].diff()                # Price direction
+    direction = pd.Series(1, index=df.index)            # Start with 1
+    direction = direction.where(price_change >= 0, -1)  # Set to -1 if dropped
+    direction = direction.mask(price_change == 0, 0)    # Set to 0 if no change
+    df['obv'] = (direction * df['volume']).cumsum()
     return df
 
 
