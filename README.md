@@ -65,27 +65,27 @@ python3 tsigna.py [arguments] ticker1 [ticker2]
 
 ### Command-Line Arguments
 
-| Argument           | Short Flag | Description                                   |
-| ------------------ | ---------- | --------------------------------------------- |
-| `--help`           | `-h`       | Show help message                             |
-| `--atr`            | `-a`       | Display ATR indicator                         |
-| `--atr-only`       | `-A`       | Display **only** ATR indicator                |
-| `--bollinger`      | `-b`       | Display Bollinger Bands indicator             |
-| `--mfi`            | `-f`       | Display MFI indicator                         |
-| `--mfi-only`       | `-F`       | Display **only** MFI indicator                |
-| `--indicator-info` | `-i`       | Show indicator information                    |
-| `--macd`           | `-m`       | Display MACD indicator                        |
-| `--macd-only`      | `-M`       | Display **only** MACD indicator               |
-| `--no-cache`       | `-n`       | Bypass cache and get latest data              |
-| `--obv`            | `-o`       | Display OBV indicator                         |
-| `--obv-only`       | `-O`       | Display **only** OBV indicator                |
-| `--rsi`            | `-r`       | Display RSI indicator                         |
-| `--rsi-only`       | `-R`       | Display **only** RSI indicator                |
-| `--stoch`          | `-s`       | Display Stochastics indicator                 |
-| `--stoch-only`     | `-S`       | Display **only** Stochastics indicator        |
-| `--volume`         | `-v`       | Display volume                                |
-| `--volume-only`    | `-V`       | Display **only** volume                       |
-| `--years`          | `-y`       | Set years to plot, use 0 for ytd (default: 1) |
+| Argument           | Short Flag | Description                                        |
+| ------------------ | ---------- | -------------------------------------------------- |
+| `--help`           | `-h`       | Show help message                                  |
+| `--atr`            | `-a`       | Display ATR indicator (Average True Range)         |
+| `--atr-only`       | `-A`       | Display **only** ATR indicator                     |
+| `--bollinger`      | `-b`       | Display Bollinger Bands indicator                  |
+| `--mfi`            | `-f`       | Display MFI indicator (Money Flow Index)           |
+| `--mfi-only`       | `-F`       | Display **only** MFI indicator                     |
+| `--indicator-info` | `-i`       | Show indicator information                         |
+| `--macd`           | `-m`       | Display MACD indicator (Moving Average Convergence Divergence) |
+| `--macd-only`      | `-M`       | Display **only** MACD indicator                    |
+| `--no-cache`       | `-n`       | Bypass cache and get latest data                   |
+| `--obv`            | `-o`       | Display OBV indicator (On-Balance Volume)          |
+| `--obv-only`       | `-O`       | Display **only** OBV indicator                     |
+| `--rsi`            | `-r`       | Display RSI indicator (Relative Strength Index)    |
+| `--rsi-only`       | `-R`       | Display **only** RSI indicator                     |
+| `--stoch`          | `-s`       | Display Stochastics indicator                      |
+| `--stoch-only`     | `-S`       | Display **only** Stochastics indicator             |
+| `--volume`         | `-v`       | Display volume                                     |
+| `--volume-only`    | `-V`       | Display **only** volume                            |
+| `--years`          | `-y`       | Set years to plot, use 0 for ytd (default: 1)      |
 
 ## Configuration
 

@@ -60,31 +60,23 @@ STOCH_OVERBOUGHT_LEVEL = 80
 STOCH_OVERSOLD_LEVEL = 20
 ATR_PERIOD = 14
 
-# Valid terminal plots colors (standard 8-color ANSI palette):
+# Valid colors (standard 8-color ANSI palette):
 # black, red, green, yellow, blue, magenta, cyan, and white
-PRICE_RATIO_COLOR = 'blue'
+# An optional 'bright_' prefix can be added, e.g. 'bright_green'
+TEXT_COLOR = 'white'
+MAIN_LINE_COLOR = 'blue'
+OVERBOUGHT_COLOR = 'red'
+OVERSOLD_COLOR = 'green'
 MOVING_AVG_1_COLOR = 'green'
 MOVING_AVG_2_COLOR = 'yellow'
 MOVING_AVG_3_COLOR = 'red'
 BB_SMA_COLOR = 'cyan'
 BB_UPPER_BAND_COLOR = 'red'
 BB_LOWER_BAND_COLOR = 'green'
-VOLUME_VALUE_COLOR = 'blue'
-MACD_VALUE_COLOR = 'blue'
 MACD_SIGNAL_COLOR = 'red'
 MACD_HISTOGRAM_COLOR = 'green'
-RSI_VALUE_COLOR = 'blue'
-RSI_OVERBOUGHT_COLOR = 'red'
-RSI_OVERSOLD_COLOR = 'green'
-MFI_VALUE_COLOR = 'blue'
-MFI_OVERBOUGHT_COLOR = 'red'
-MFI_OVERSOLD_COLOR = 'green'
 STOCH_K_COLOR = 'blue'
 STOCH_D_COLOR = 'red'
-STOCH_OVERBOUGHT_COLOR = 'red'
-STOCH_OVERSOLD_COLOR = 'green'
-ATR_VALUE_COLOR = 'blue'
-OBV_VALUE_COLOR = 'blue'
 
 INDICATOR_INFO = {
     "ATR (Average True Range)": {
@@ -133,29 +125,29 @@ def main():
     parser.add_argument('ticker2', nargs='?',
                         help='second ticker for ratio plot')
     parser.add_argument('-a', '--atr', action='store_true',
-                        help='display ATR indicator')
+                        help='display ATR indicator (Average True Range)')
     parser.add_argument('-A', '--atr-only', action='store_true',
                         help='display only ATR indicator')
     parser.add_argument('-b', '--bollinger', action='store_true',
                         help='display Bollinger Bands indicator')
     parser.add_argument('-f', '--mfi', action='store_true',
-                        help='display MFI indicator')
+                        help='display MFI indicator (Money Flow Index)')
     parser.add_argument('-F', '--mfi-only', action='store_true',
                         help='display only MFI indicator')
     parser.add_argument('-i', '--indicator-info', action='store_true',
                         help='show indicator information')
     parser.add_argument('-m', '--macd', action='store_true',
-                        help='display MACD indicator')
+                        help='display MACD indicator (Moving Average Convergence Divergence)')
     parser.add_argument('-M', '--macd-only', action='store_true',
                         help='display only MACD indicator')
     parser.add_argument('-n', '--no-cache', action='store_true',
                         help='bypass cache and get latest data')
     parser.add_argument('-o', '--obv', action='store_true',
-                        help='display OBV indicator')
+                        help='display OBV indicator (On-Balance Volume)')
     parser.add_argument('-O', '--obv-only', action='store_true',
                         help='display only OBV indicator')
     parser.add_argument('-r', '--rsi', action='store_true',
-                        help='display RSI indicator')
+                        help='display RSI indicator (Relative Strength Index)')
     parser.add_argument('-R', '--rsi-only', action='store_true',
                         help='display only RSI indicator')
     parser.add_argument('-s', '--stoch', action='store_true',
@@ -425,46 +417,51 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     fig.set_x_limits(dates[0], dates[-1])
     fig.set_y_limits(min(all_values), max(all_values))
 
+    # Eventually get more color choices, but beware of compatibility issues
+    # https://github.com/tammoippen/plotille/blob/master/plotille/_colors.py
+    # https://en.wikipedia.org/wiki/ANSI_escape_code#3-bit_and_4-bit
+    #fig.color_mode = 'rgb'
+
     # Prepare the plots and text to display
     if plot_type == 'vol':
-        fig.plot(dates, volume, lc=VOLUME_VALUE_COLOR)
+        fig.plot(dates, volume, lc=MAIN_LINE_COLOR)
         last = f'{volume[-1]:.0f}'
         text = f'Volume last value: {last}'
     elif plot_type == 'macd':
         fig.plot(dates, signal, lc=MACD_SIGNAL_COLOR)
-        fig.plot(dates, macd, lc=MACD_VALUE_COLOR)
+        fig.plot(dates, macd, lc=MAIN_LINE_COLOR)
         fig.plot(dates, histogram, lc=MACD_HISTOGRAM_COLOR)
         last = f'{histogram[-1]:.2f}'
         text = f'MACD histogram last value: {last}'
     elif plot_type == 'rsi':
-        fig.plot(dates, overbought, lc=RSI_OVERBOUGHT_COLOR)
-        fig.plot(dates, oversold, lc=RSI_OVERSOLD_COLOR)
-        fig.plot(dates, rsi, lc=RSI_VALUE_COLOR)
+        fig.plot(dates, overbought, lc=OVERBOUGHT_COLOR)
+        fig.plot(dates, oversold, lc=OVERSOLD_COLOR)
+        fig.plot(dates, rsi, lc=MAIN_LINE_COLOR)
         last = f'{rsi[-1]:.2f}'
         text = f'RSI last value: {last}'
     elif plot_type == 'mfi':
-        fig.plot(dates, overbought, lc=MFI_OVERBOUGHT_COLOR)
-        fig.plot(dates, oversold, lc=MFI_OVERSOLD_COLOR)
-        fig.plot(dates, mfi, lc=MFI_VALUE_COLOR)
+        fig.plot(dates, overbought, lc=OVERBOUGHT_COLOR)
+        fig.plot(dates, oversold, lc=OVERSOLD_COLOR)
+        fig.plot(dates, mfi, lc=MAIN_LINE_COLOR)
         last = f'{mfi[-1]:.2f}'
         text = f'MFI last value: {last}'
     elif plot_type == 'stoch':
-        fig.plot(dates, overbought, lc=STOCH_OVERBOUGHT_COLOR)
-        fig.plot(dates, oversold, lc=STOCH_OVERSOLD_COLOR)
+        fig.plot(dates, overbought, lc=OVERBOUGHT_COLOR)
+        fig.plot(dates, oversold, lc=OVERSOLD_COLOR)
         fig.plot(dates, stoch_k, lc=STOCH_K_COLOR)
         fig.plot(dates, stoch_d, lc=STOCH_D_COLOR)
         last = f'{stoch_d[-1]:.2f}'
         text = f'Stochastics last value: {last}'
     elif plot_type == 'atr':
-        fig.plot(dates, atr, lc=ATR_VALUE_COLOR)
+        fig.plot(dates, atr, lc=MAIN_LINE_COLOR)
         last = f'{atr[-1]:.2f}'
         text = f'ATR last value: {last}'
     elif plot_type == 'obv':
-        fig.plot(dates, obv, lc=OBV_VALUE_COLOR)
+        fig.plot(dates, obv, lc=MAIN_LINE_COLOR)
         last = f'{obv[-1]:.0f}'
         text = f'OBV last value: {last}'
     elif plot_type == 'bb':
-        fig.plot(dates, close, lc=PRICE_RATIO_COLOR)
+        fig.plot(dates, close, lc=MAIN_LINE_COLOR)
         fig.plot(dates, sma, lc=BB_SMA_COLOR)
         fig.plot(dates, upper, lc=BB_UPPER_BAND_COLOR)
         fig.plot(dates, lower, lc=BB_LOWER_BAND_COLOR)
@@ -475,7 +472,7 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, ma3, lc=MOVING_AVG_3_COLOR)
         fig.plot(dates, ma2, lc=MOVING_AVG_2_COLOR)
         fig.plot(dates, ma1, lc=MOVING_AVG_1_COLOR)
-        fig.plot(dates, close, lc=PRICE_RATIO_COLOR)
+        fig.plot(dates, close, lc=MAIN_LINE_COLOR)
         last = f'{close[-1]:.0f}' if close[-1] > 1000 else f'{close[-1]:.2f}'
         change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
         text = f'{plot_name} last value: {last} ({change}%)'
@@ -483,7 +480,7 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     # Display the last value text
     x = dates[0] + (dates[-1] - dates[0]) * 0.55
     y = min(all_values)
-    fig.text([x], [y], [text])
+    fig.text([x], [y], [text], lc=TEXT_COLOR)
 
     print(fig.show(legend=False))
 
