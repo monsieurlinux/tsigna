@@ -416,6 +416,7 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     fig.height = math.floor(shutil.get_terminal_size()[1] * height_ratio) - 5
     fig.set_x_limits(dates[0], dates[-1])
     fig.set_y_limits(min(all_values), max(all_values))
+    fig.y_ticks_fkt = get_y_tick
 
     # Eventually get more color choices, but beware of compatibility issues
     # https://github.com/tammoippen/plotille/blob/master/plotille/_colors.py
@@ -425,47 +426,47 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     # Prepare the plots and text to display
     if plot_type == 'vol':
         fig.plot(dates, volume, lc=MAIN_LINE_COLOR)
-        last = f'{volume[-1]:.0f}'
+        last = f'{volume[-1]:,.0f}'
         text = f'Volume last value: {last}'
     elif plot_type == 'macd':
         fig.plot(dates, signal, lc=MACD_SIGNAL_COLOR)
         fig.plot(dates, macd, lc=MAIN_LINE_COLOR)
         fig.plot(dates, histogram, lc=MACD_HISTOGRAM_COLOR)
-        last = f'{histogram[-1]:.2f}'
+        last = f'{histogram[-1]:,.2f}'
         text = f'MACD histogram last value: {last}'
     elif plot_type == 'rsi':
         fig.plot(dates, overbought, lc=OVERBOUGHT_COLOR)
         fig.plot(dates, oversold, lc=OVERSOLD_COLOR)
         fig.plot(dates, rsi, lc=MAIN_LINE_COLOR)
-        last = f'{rsi[-1]:.2f}'
+        last = f'{rsi[-1]:,.2f}'
         text = f'RSI last value: {last}'
     elif plot_type == 'mfi':
         fig.plot(dates, overbought, lc=OVERBOUGHT_COLOR)
         fig.plot(dates, oversold, lc=OVERSOLD_COLOR)
         fig.plot(dates, mfi, lc=MAIN_LINE_COLOR)
-        last = f'{mfi[-1]:.2f}'
+        last = f'{mfi[-1]:,.2f}'
         text = f'MFI last value: {last}'
     elif plot_type == 'stoch':
         fig.plot(dates, overbought, lc=OVERBOUGHT_COLOR)
         fig.plot(dates, oversold, lc=OVERSOLD_COLOR)
         fig.plot(dates, stoch_k, lc=STOCH_K_COLOR)
         fig.plot(dates, stoch_d, lc=STOCH_D_COLOR)
-        last = f'{stoch_d[-1]:.2f}'
+        last = f'{stoch_d[-1]:,.2f}'
         text = f'Stochastics last value: {last}'
     elif plot_type == 'atr':
         fig.plot(dates, atr, lc=MAIN_LINE_COLOR)
-        last = f'{atr[-1]:.2f}'
+        last = f'{atr[-1]:,.2f}'
         text = f'ATR last value: {last}'
     elif plot_type == 'obv':
         fig.plot(dates, obv, lc=MAIN_LINE_COLOR)
-        last = f'{obv[-1]:.0f}'
+        last = f'{obv[-1]:,.0f}'
         text = f'OBV last value: {last}'
     elif plot_type == 'bb':
         fig.plot(dates, close, lc=MAIN_LINE_COLOR)
         fig.plot(dates, sma, lc=BB_SMA_COLOR)
         fig.plot(dates, upper, lc=BB_UPPER_BAND_COLOR)
         fig.plot(dates, lower, lc=BB_LOWER_BAND_COLOR)
-        last = f'{close[-1]:.0f}' if close[-1] > 1000 else f'{close[-1]:.2f}'
+        last = f'{close[-1]:,.2f}'
         change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
         text = f'{plot_name} last value: {last} ({change}%)'
     else:  # Main plot with moving averages
@@ -473,7 +474,7 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, ma2, lc=MOVING_AVG_2_COLOR)
         fig.plot(dates, ma1, lc=MOVING_AVG_1_COLOR)
         fig.plot(dates, close, lc=MAIN_LINE_COLOR)
-        last = f'{close[-1]:.0f}' if close[-1] > 1000 else f'{close[-1]:.2f}'
+        last = f'{close[-1]:,.2f}'
         change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
         text = f'{plot_name} last value: {last} ({change}%)'
 
@@ -483,6 +484,20 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     fig.text([x], [y], [text], lc=TEXT_COLOR)
 
     print(fig.show(legend=False))
+
+
+def get_y_tick(min_, max_):
+    tick = ''
+    
+    # Make sure we don't exceed 10 characters
+    if min_ > 9999999999:
+        tick = min_            # Leave the tick in scientific notation
+    elif min_ > 999999.99:
+        tick = f"{min_:.4e}"   # Convert the tick to scientific notation
+    else:
+        tick = f"{min_:,.2f}"  # Show 2 decimals and thousands separator
+
+    return tick
 
 
 def add_moving_averages(df):
