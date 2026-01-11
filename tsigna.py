@@ -78,39 +78,47 @@ MACD_HISTOGRAM_COLOR = 'green'
 STOCH_K_COLOR = 'blue'
 STOCH_D_COLOR = 'red'
 
-INDICATOR_INFO = {
+INDICATOR_DESCRIPTIONS = {
     "ATR (Average True Range)": {
-        "category": "Volatility",
-        "usage": "Measures market volatility by decomposing the entire range of an asset price for that period. Use it to set stop-loss levels (placing them wider than the ATR) or to determine position sizing based on current market noise."
+        "category": "Volatility Indicator",
+        "description": "Measures market volatility by decomposing the entire range of an asset price for that period. Use it to set stop-loss levels (placing them wider than the ATR) or to determine position sizing based on current market noise."
     },
     "Bollinger Bands": {
-        "category": "Volatility",
-        "usage": "Consists of a middle band (SMA) and two outer bands that expand and contract based on volatility. Use it to identify overbought/oversold conditions (price near bands) and potential breakouts after periods of low volatility (squeeze)."
+        "category": "Volatility Indicator",
+        "description": "Consists of a middle band (SMA) and two outer bands that expand and contract based on volatility. Use it to identify overbought/oversold conditions (price near bands) and potential breakouts after periods of low volatility (squeeze)."
     },
     "MACD (Moving Average Convergence Divergence)": {
-        "category": "Trend / Momentum",
-        "usage": "Shows the relationship between two moving averages. Look for signal line crossovers to identify trend direction and divergences (where price moves opposite to the indicator) to spot potential reversals."
+        "category": "Trend / Momentum Indicator",
+        "description": "Shows the relationship between two moving averages. Look for signal line crossovers to identify trend direction and divergences (where price moves opposite to the indicator) to spot potential reversals."
     },
     "MFI (Money Flow Index)": {
         "category": "Momentum Oscillator",
-        "usage": "Incorporates both price and volume data to measure buying and selling pressure. Use it like RSI to identify overbought/oversold levels, but rely on it more heavily as volume-driven divergence is often a stronger signal."
+        "description": "Incorporates both price and volume data to measure buying and selling pressure. Use it like RSI to identify overbought/oversold levels, but rely on it more heavily as volume-driven divergence is often a stronger signal."
     },
     "Moving Averages": {
-        "category": "Trend",
-        "usage": "Smooths out price data to identify the direction of the trend. Use it to determine entry points (e.g., buy when price crosses above the line) or dynamic support/resistance levels."
+        "category": "Trend Indicator",
+        "description": "Smooths out price data to identify the direction of the trend. Use it to determine entry points (e.g., buy when price crosses above the line) or dynamic support/resistance levels."
     },
     "OBV (On-Balance Volume)": {
-        "category": "Volume",
-        "usage": "A cumulative indicator that adds volume on up days and subtracts volume on down days. Use it to confirm the strength of a trend (e.g., rising price + rising OBV = strong trend) or spot reversals via divergence."
+        "category": "Volume Indicator",
+        "description": "A cumulative indicator that adds volume on up days and subtracts volume on down days. Use it to confirm the strength of a trend (e.g., rising price + rising OBV = strong trend) or spot reversals via divergence."
     },
     "RSI (Relative Strength Index)": {
         "category": "Momentum Oscillator",
-        "usage": "Measures the speed and change of price movements on a scale of 0 to 100. Use it to identify overbought conditions (above 70) or oversold conditions (below 30) and to spot bullish or bearish divergences."
+        "description": "Measures the speed and change of price movements on a scale of 0 to 100. Use it to identify overbought conditions (above 70) or oversold conditions (below 30) and to spot bullish or bearish divergences."
     },
     "Stochastics": {
         "category": "Momentum Oscillator",
-        "usage": "Compares a particular closing price of an asset to a range of its prices over a certain period of time. Look for the lines to cross in overbought (above 80) or oversold (below 20) areas to time reversals."
+        "description": "Compares a particular closing price of an asset to a range of its prices over a certain period of time. Look for the lines to cross in overbought (above 80) or oversold (below 20) areas to time reversals."
     },
+}
+
+INDICATOR_CATEGORIES = {
+    "Trend Indicator": "Identifies market direction.",
+    "Trend / Momentum Indicator": "Measures trend strength and direction.",
+    "Momentum Oscillator": "Identifies overbought or oversold levels.",
+    "Volatility Indicator": "Measures price fluctuation range.",
+    "Volume Indicator": "Confirms trend strength via activity.",
 }
 
 # Get a logger for this script
@@ -599,13 +607,28 @@ def print_indicator_info():
     width = shutil.get_terminal_size()[0]
     indent = ' ' * 4
     
-    for name, data in INDICATOR_INFO.items():
-        print(f"\n{name.upper()}")
-        desc = f"{data['category']} Indicator - {data['usage'].strip()}"
+    # Print a section for each indicator with its description
+    for name, data in INDICATOR_DESCRIPTIONS.items():
+        title = plotille.color(name.upper(), fg='green')
+        category = plotille.color(data['category'], fg='blue')
+        description = f"{category} - {data['description']}"
         wrapper = textwrap.TextWrapper(width=width, initial_indent=indent,
                                        subsequent_indent=indent)
-        output = wrapper.fill(desc)
-        print(output)
+        description = wrapper.fill(description)
+        print(f"\n{title}")
+        print(description)
+
+    # Print a section with the indicator categories descriptions
+    title = plotille.color('INDICATOR CATEGORIES', fg='green')
+    print(f"\n{title}")
+
+    for category, description in INDICATOR_CATEGORIES.items():
+        category = plotille.color(category, fg='blue')
+        description = f"{category} - {description}"
+        wrapper = textwrap.TextWrapper(width=width, initial_indent=indent,
+                                       subsequent_indent=indent)
+        description = wrapper.fill(description)
+        print(description)
 
     print()
 
