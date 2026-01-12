@@ -1,16 +1,16 @@
-![NVDA stock price and moving averages over 1 year](img/tsigna-nvda-1y-75.png "NVDA stock price and moving averages over 1 year")
+![NVDA stock price, moving averages and volume over 1 year](img/tsigna-nvda-moving-averages-volume-1y.png "NVDA stock price, moving averages and volume over 1 year")
 
 # Tsigna
 
 Tsigna is a Python financial analysis tool that runs entirely in the terminal. It is most useful for medium-term trading. It fetches historical stock data from Yahoo Finance, calculates technical indicators including moving averages, MACD, and RSI, and displays them as text-based charts using the plotille library. The tool supports single ticker analysis, ratio comparisons between two tickers, and a special MMRI calculation. Users can customize the time period and split the terminal display to show multiple indicators simultaneously.
 
-![NVDA stock price with RSI indicator over 1 year](img/tsigna-nvda-rsi-1y-75.png "NVDA stock price with RSI indicator over 1 year")
+![NVDA stock price, Bollinger Bands and Stochastics over 1 year](img/tsigna-nvda-bollinger-bands-stochastics-1y.png "NVDA stock price, Bollinger Bands and Stochastics over 1 year")
 
 ## Background
 
 Originally I was looking for a free online tool to plot the **ratio between two tickers**, but I didn't find such a tool so I started working on Tsigna. The name comes from 'T' for terminal and the plural form of signum, the latin word for signal. The 'T' also stands for technical, like in technical indicators, from which we get technical signals.
 
-![Ratio between NVDA and WMT stock prices over 2 years](img/tsigna-nvda-wmt-2y-75.png "Ratio between NVDA and WMT stock prices over 2 years")
+![Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years](img/tsigna-nvda-wmt-moving-averages-rsi-2y.png "Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years")
 
 ## Installation
 
