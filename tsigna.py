@@ -22,6 +22,7 @@ import logging
 import math
 from pathlib import Path
 import requests
+from curl_cffi import requests as curlreqs
 import shutil
 import sys
 import textwrap
@@ -208,8 +209,9 @@ def main():
         df1, df2 = get_data(ticker1, ticker2, no_cache=args.no_cache)
     except KeyError as e:
         logger.error(f'Invalid ticker: {e}')
-    except requests.exceptions.RequestException as e:
-        logger.error(f'Connection failed: {e}')
+    except (requests.exceptions.RequestException,
+            curlreqs.exceptions.RequestException) as e:
+        logger.error(f'Network error: {e}')
     except AssertionError as e:
         logger.error(f'Assert failed: {e}')
     except Exception as e:
