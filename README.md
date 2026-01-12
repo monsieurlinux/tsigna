@@ -1,66 +1,31 @@
-![NVDA stock price, moving averages and volume over 1 year](img/tsigna-nvda-moving-averages-volume-1y.png "NVDA stock price, moving averages and volume over 1 year")
+![NVDA stock price, moving averages and volume over 1 year](https://github.com/monsieurlinux/tsigna/raw/main/img/tsigna-nvda-moving-averages-volume-1y.png "NVDA stock price, moving averages and volume over 1 year")
 
 # Tsigna
 
 Tsigna is a Python financial analysis tool that runs entirely in the terminal. It is most useful for medium-term trading. It fetches historical stock data from Yahoo Finance, calculates technical indicators including moving averages, MACD, and RSI, and displays them as text-based charts using the plotille library. The tool supports single ticker analysis, ratio comparisons between two tickers, and a special MMRI calculation. Users can customize the time period and split the terminal display to show multiple indicators simultaneously.
 
-![NVDA stock price, Bollinger Bands and Stochastics over 1 year](img/tsigna-nvda-bollinger-bands-stochastics-1y.png "NVDA stock price, Bollinger Bands and Stochastics over 1 year")
+![NVDA stock price, Bollinger Bands and Stochastics over 1 year](https://github.com/monsieurlinux/tsigna/raw/main/img/tsigna-nvda-bollinger-bands-stochastics-1y.png "NVDA stock price, Bollinger Bands and Stochastics over 1 year")
 
 ## Background
 
 Originally I was looking for a free online tool to plot the **ratio between two tickers**, but I didn't find such a tool so I started working on Tsigna. The name comes from 'T' for terminal and the plural form of signum, the latin word for signal. The 'T' also stands for technical, like in technical indicators, from which we get technical signals.
 
-![Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years](img/tsigna-nvda-wmt-moving-averages-rsi-2y.png "Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years")
+![Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years](https://github.com/monsieurlinux/tsigna/raw/main/img/tsigna-nvda-wmt-moving-averages-rsi-2y.png "Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years")
 
 ## Installation
 
-Tsigna has been developped with Python 3.11 but may work with older versions. You can check your version with the `python3 --version` or `python --version` command. Only a few external libraries are required.
+Tsigna has been developped with Python 3.11 but may work with older versions. It depends on the [pandas](https://github.com/pandas-dev/pandas), [plotille](https://github.com/tammoippen/plotille) and [yahooquery](https://github.com/dpguthrie/yahooquery) external libraries and their dependencies. They will all be installed automatically with the following command. It is recommended to make the installation within a [virtual environment](https://docs.python.org/3/tutorial/venv.html).
 
-### Install Dependencies
-
-Tsigna depends on the [pandas](https://github.com/pandas-dev/pandas), [plotille](https://github.com/tammoippen/plotille) and [yahooquery](https://github.com/dpguthrie/yahooquery) libraries and their dependencies. It is recommended to install them within a [virtual environment](https://docs.python.org/3/tutorial/venv.html).
-
-Note that the following instructions have only been tested on Linux. On Windows you may need to use the `python` and `pip` commands instead of `python3` and `pip3`.
-
-1.  **Create a virtual environment** in a directory of your choice:
-    
-    ```bash
-    python3 -m venv tsigna-env
-    ```
-    
-2.  **Activate the virtual environment**:
-
-	On Linux and macOS:
-    ```bash
-    source tsigna-env/bin/activate
-    ```
-    On Windows:
-    ```bash
-    tsigna-env\Scripts\activate
-    ```
-
-3.  **Install the required libraries**:
-    
-    ```bash
-    pip3 install pandas plotille yahooquery
-    ```
-
-After installing the dependencies, you are ready to download and run Tsigna.
+```bash
+pip install tsignal
+```
 
 ## Usage
 
 ### Basic Usage
 
-On Linux you should be able to run Tsigna directly if its location is in your path:
-
 ```bash
-tsigna.py [arguments] ticker1 [ticker2]
-```
-
-Otherwise you can run it with Python:
-
-```bash
-python3 tsigna.py [arguments] ticker1 [ticker2]
+tsigna [arguments] ticker1 [ticker2]
 ```
 
 ### Command-Line Arguments
@@ -99,7 +64,7 @@ I do not own any of the stocks in the examples, I chose them because they are ve
 
 Copyright (c) 2025 Monsieur Linux
 
-This project is licensed under the MIT License. See the [LICENSE](LICENSE) file for details.
+This project is licensed under the MIT License. See the LICENSE file for details.
 
 ## Acknowledgements
 
