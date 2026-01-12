@@ -77,7 +77,7 @@ BB_LOWER_BAND_COLOR = 'green'
 MACD_SIGNAL_COLOR = 'red'
 MACD_HISTOGRAM_COLOR = 'green'
 STOCH_K_COLOR = 'blue'
-STOCH_D_COLOR = 'red'
+STOCH_D_COLOR = 'yellow'
 
 INDICATOR_DESCRIPTIONS = {
     "ATR (Average True Range)": {
@@ -317,7 +317,7 @@ def get_data(ticker1, ticker2, no_cache=False):
     return df1, df2
 
 
-def process_data(df1, df2, years, plot_name, main_ind, xtra_ind):
+def process_data(df1, df2, years, plot_name, main_ind = 'ma' , xtra_ind = []):
     if df2.empty:
         # Only one ticker has been provided, so this is the data to plot
         df = df1
