@@ -12,11 +12,19 @@ Originally I was looking for a free online tool to plot the **ratio between two 
 
 ![Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years](https://github.com/monsieurlinux/tsigna/raw/main/img/tsigna-nvda-wmt-moving-averages-rsi-2y.png "Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years")
 
+## Dependencies
+
+Tsigna requires the following external libraries:
+
+* **[pandas](https://github.com/pandas-dev/pandas)**: Used for data manipulation and analysis.
+* **[plotille](https://github.com/tammoippen/plotille)**: Used for creating terminal-based plots.
+* **[yahooquery](https://github.com/dpguthrie/yahooquery)**: Used for fetching financial data from Yahoo Finance.
+
+These libraries and their sub-dependencies will be installed automatically when you install Tsigna.
+
 ## Installation
 
-Tsigna has been developed with Python 3.11 but may work with older versions. It depends on the [pandas](https://github.com/pandas-dev/pandas), [plotille](https://github.com/tammoippen/plotille), and [yahooquery](https://github.com/dpguthrie/yahooquery) external libraries and their dependencies, which will all be installed automatically along with Tsigna.
-
-It is highly recommended to install Tsigna within a [virtual environment](https://docs.python.org/3/tutorial/venv.html) to avoid conflicts with system packages. Some Linux distributions enforce this. You can use `pipx` to handle the virtual environment automatically, or create one manually and use `pip`.
+It is recommended to install Tsigna within a [virtual environment](https://docs.python.org/3/tutorial/venv.html) to avoid conflicts with system packages. Some Linux distributions enforce this. You can use `pipx` to handle the virtual environment automatically, or create one manually and use `pip`.
 
 ### Installation with `pipx`
 
