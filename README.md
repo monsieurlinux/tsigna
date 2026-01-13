@@ -14,7 +14,43 @@ Originally I was looking for a free online tool to plot the **ratio between two 
 
 ## Installation
 
-Tsigna has been developped with Python 3.11 but may work with older versions. It depends on the [pandas](https://github.com/pandas-dev/pandas), [plotille](https://github.com/tammoippen/plotille) and [yahooquery](https://github.com/dpguthrie/yahooquery) external libraries and their dependencies. They will all be installed automatically with the following command. It is recommended to make the installation within a [virtual environment](https://docs.python.org/3/tutorial/venv.html).
+Tsigna has been developed with Python 3.11 but may work with older versions. It depends on the [pandas](https://github.com/pandas-dev/pandas), [plotille](https://github.com/tammoippen/plotille), and [yahooquery](https://github.com/dpguthrie/yahooquery) external libraries and their dependencies, which will all be installed automatically along with Tsigna.
+
+It is highly recommended to install Tsigna within a [virtual environment](https://docs.python.org/3/tutorial/venv.html) to avoid conflicts with system packages. Some Linux distributions enforce this. You can use `pipx` to handle the virtual environment automatically, or create one manually and use `pip`.
+
+### Installation with `pipx`
+
+`pipx` installs Tsigna in an isolated environment and makes it available globally.
+
+**1. Install `pipx`:**
+
+*   **Linux (Debian / Ubuntu / Mint):**
+    
+    ```bash
+    sudo apt update && sudo apt install pipx
+    ```
+*   **Linux (Other) / macOS:**
+    
+    ```bash
+    python3 -m pip install --user pipx
+    python3 -m pipx ensurepath
+    # Note: Close and restart your terminal after running ensurepath
+    ```
+*   **Windows:**
+    
+    ```bash
+    python -m pip install --user pipx
+    ```
+
+**2. Install Tsigna:**
+
+```bash
+pipx install tsigna
+```
+
+### Installation with `pip`
+
+If you prefer to manage the virtual environment manually, you can create and activate it by following this [tutorial](https://docs.python.org/3/tutorial/venv.html). Then install Tsigna:
 
 ```bash
 pip install tsigna
@@ -51,10 +87,6 @@ tsigna [arguments] ticker1 [ticker2]
 | `--volume`         | `-v`       | Display volume                                     |
 | `--volume-only`    | `-V`       | Display **only** volume                            |
 | `--years`          | `-y`       | Set years to plot, use 0 for ytd (default: 1)      |
-
-## Configuration
-
-You can edit the configuration constants directly at the top of the tsigna.py file if you wish to change the default behavior. For example you can change the expiration time of the cache (it is 5 minutes by default) or disable it. You can also change the colors of the lines, the parameters of the technical indicators, etc.
 
 ## Not Financial Advice
 
