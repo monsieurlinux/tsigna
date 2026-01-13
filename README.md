@@ -17,7 +17,7 @@ Originally I was looking for a free online tool to plot the **ratio between two 
 Tsigna has been developped with Python 3.11 but may work with older versions. It depends on the [pandas](https://github.com/pandas-dev/pandas), [plotille](https://github.com/tammoippen/plotille) and [yahooquery](https://github.com/dpguthrie/yahooquery) external libraries and their dependencies. They will all be installed automatically with the following command. It is recommended to make the installation within a [virtual environment](https://docs.python.org/3/tutorial/venv.html).
 
 ```bash
-pip install tsignal
+pip install tsigna
 ```
 
 ## Usage
