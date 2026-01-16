@@ -489,7 +489,7 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, close, lc=MAIN_LINE_COLOR)
         fig.plot(dates, upper, lc=BB_UPPER_BAND_COLOR)
         fig.plot(dates, lower, lc=BB_LOWER_BAND_COLOR)
-        last = f'{close[-1]:,.2f}'
+        last = f'{close[-1]:.4f}' if close[-1] < 10 else f'{close[-1]:,.2f}'
         change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
         text = f'{plot_name} last value: {last} ({change}%)'
     else:  # Main plot with moving averages
@@ -497,7 +497,7 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, ma2, lc=MOVING_AVG_2_COLOR)
         fig.plot(dates, ma1, lc=MOVING_AVG_1_COLOR)
         fig.plot(dates, close, lc=MAIN_LINE_COLOR)
-        last = f'{close[-1]:,.2f}'
+        last = f'{close[-1]:.4f}' if close[-1] < 10 else f'{close[-1]:,.2f}'
         change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
         text = f'{plot_name} last value: {last} ({change}%)'
 
@@ -517,6 +517,8 @@ def get_y_tick(min_, max_):
         tick = min_            # Leave the tick in scientific notation
     elif min_ > 999999.99:
         tick = f"{min_:.4e}"   # Convert the tick to scientific notation
+    elif min_ < 10:
+        tick = f"{min_:.4f}"  # Show 4 decimals
     else:
         tick = f"{min_:,.2f}"  # Show 2 decimals and thousands separator
 
