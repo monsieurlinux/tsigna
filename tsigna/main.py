@@ -34,8 +34,12 @@ import plotille
 from yahooquery import Ticker  # Alternative fork: ybankinplay
 
 # Configuration constants
+APP_NAME = "tsigna"
+CONFIG_DIR = Path.home() / f'.{APP_NAME}'
+CACHE_DIR = CONFIG_DIR / 'cache'
+CONFIG_DIR.mkdir(parents=True, exist_ok=True)
+CACHE_DIR.mkdir(parents=True, exist_ok=True)
 CACHE_ENABLE = True
-CACHE_PATH = Path.home() / f'.{Path(__file__).stem}'
 CACHE_EXPIRY = 300  # 300 seconds = 5 minutes
 YEARS_TO_PLOT = 1
 INDICATOR_HEIGHT_RATIO = 0.3
@@ -269,25 +273,24 @@ def get_tickers_and_plot_name(args):
 def get_data(ticker1, ticker2, no_cache=False):
     fetch_data = True
     df2 = pd.DataFrame()
-    CACHE_PATH.mkdir(parents=True, exist_ok=True)
-    path1 = Path(f'{CACHE_PATH}/{ticker1.lower()}.csv') if ticker1 else None
-    path2 = Path(f'{CACHE_PATH}/{ticker2.lower()}.csv') if ticker2 else None
+    cache1 = Path(f'{CACHE_DIR}/{ticker1.lower()}.csv') if ticker1 else None
+    cache2 = Path(f'{CACHE_DIR}/{ticker2.lower()}.csv') if ticker2 else None
 
     if CACHE_ENABLE and not no_cache:
         fetch_data = False
         now = time.time()
 
-        if path1.is_file() and (now - path1.stat().st_mtime < CACHE_EXPIRY):
+        if cache1.is_file() and (now - cache1.stat().st_mtime < CACHE_EXPIRY):
             logger.info(f'Getting {ticker1} data from cache')
-            df1 = pd.read_csv(path1, parse_dates=['date'])
+            df1 = pd.read_csv(cache1, parse_dates=['date'])
             df1.set_index('date', inplace=True)
         else:
             fetch_data = True
         
         if ticker2:
-            if path2.is_file() and (now - path2.stat().st_mtime < CACHE_EXPIRY):
+            if cache2.is_file() and (now - cache2.stat().st_mtime < CACHE_EXPIRY):
                 logger.info(f'Getting {ticker2} data from cache')
-                df2 = pd.read_csv(path2, parse_dates=['date'])
+                df2 = pd.read_csv(cache2, parse_dates=['date'])
                 df2.set_index('date', inplace=True)
             else:
                 fetch_data = True
@@ -299,11 +302,11 @@ def get_data(ticker1, ticker2, no_cache=False):
 
         df = tickers.history(period='10y', interval='1d')
         df1 = df.loc[ticker1]
-        if CACHE_ENABLE: df1.to_csv(path1, index=True)
+        if CACHE_ENABLE: df1.to_csv(cache1, index=True)
 
         if ticker2:
             df2 = df.loc[ticker2]
-            if CACHE_ENABLE: df2.to_csv(path2, index=True)
+            if CACHE_ENABLE: df2.to_csv(cache2, index=True)
 
     # Make sure all dates have the same format (remove time from last date)
     # normalize() sets the time to midnight while keeping pandas dates types
