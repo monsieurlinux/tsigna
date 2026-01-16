@@ -20,18 +20,26 @@ Licensed under the MIT License. See the LICENSE file for details.
 import argparse
 import logging
 import math
-from pathlib import Path
-import requests
-from curl_cffi import requests as curlreqs
 import shutil
 import sys
 import textwrap
 import time
+from pathlib import Path
 
 # Third-party library imports
 import pandas as pd
 import plotille
+import requests
+from curl_cffi import requests as curlreqs
 from yahooquery import Ticker  # Alternative fork: ybankinplay
+
+# Add project root to sys.path so script can be called directly w/o 'python3 -m'
+project_root = Path(__file__).resolve().parent.parent
+if str(project_root) not in sys.path:
+    sys.path.insert(0, str(project_root))
+
+# Local imports
+from tsigna import __version__
 
 # Configuration constants
 APP_NAME = "tsigna"
@@ -167,9 +175,11 @@ def main():
                         help='display Stochastics indicator')
     parser.add_argument('-S', '--stoch-only', action='store_true',
                         help='display only Stochastics indicator')
-    parser.add_argument('-v', '--volume', action='store_true',
+    parser.add_argument('-v', '--version', action='version', 
+                        version=f"%(prog)s {__version__}")
+    parser.add_argument('-w', '--volume', action='store_true',
                         help='display volume')
-    parser.add_argument('-V', '--volume-only', action='store_true',
+    parser.add_argument('-W', '--volume-only', action='store_true',
                         help='display only volume')
     parser.add_argument('-y', '--years', type=int, default=YEARS_TO_PLOT,
                         help='set years to plot, use 0 for ytd (default: 1)')
