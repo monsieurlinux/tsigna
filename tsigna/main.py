@@ -196,6 +196,9 @@ def main():
         parser.print_usage()
         logger.error(f'Please provide a ticker or use -i for indicator information')
         return
+    elif ticker2 and (args.volume or args.volume_only):
+        logger.error(f'Volume not available for ratio plot')
+        return
     elif ticker2 and (args.mfi or args.mfi_only):
         logger.error(f'MFI indicator not available for ratio plot')
         return
@@ -401,18 +404,19 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         rsi = df['rsi'].tolist()
         overbought = [RSI_OVERBOUGHT_LEVEL] * len(dates)
         oversold = [RSI_OVERSOLD_LEVEL] * len(dates)
-        all_values = rsi + overbought + oversold
+        # The '+5' and '-5' are to make sure the overbought/sold lines are shown
+        all_values = rsi + [RSI_OVERBOUGHT_LEVEL+5] + [RSI_OVERSOLD_LEVEL-5]
     elif plot_type == 'mfi':
         mfi = df['mfi'].tolist()
         overbought = [MFI_OVERBOUGHT_LEVEL] * len(dates)
         oversold = [MFI_OVERSOLD_LEVEL] * len(dates)
-        all_values = mfi + overbought + oversold
+        all_values = mfi + [MFI_OVERBOUGHT_LEVEL+5] + [MFI_OVERSOLD_LEVEL-5]
     elif plot_type == 'stoch':
         stoch_k = df['stoch_k'].tolist()
         stoch_d = df['stoch_d'].tolist()
         overbought = [STOCH_OVERBOUGHT_LEVEL] * len(dates)
         oversold = [STOCH_OVERSOLD_LEVEL] * len(dates)
-        all_values = stoch_k + stoch_d + overbought + oversold
+        all_values = stoch_k + stoch_d + [STOCH_OVERBOUGHT_LEVEL+5] + [STOCH_OVERSOLD_LEVEL-5]
     elif plot_type == 'atr':
         atr = df['atr'].tolist()
         all_values = atr
@@ -433,13 +437,19 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         all_values = close + ma1 + ma2 + ma3
         
     fig = plotille.Figure()
+    fig.y_ticks_fkt = get_y_tick
 
     # Determine the dimensions and limits of the plot
     fig.width = shutil.get_terminal_size()[0] - 21
     fig.height = math.floor(shutil.get_terminal_size()[1] * height_ratio) - 5
     fig.set_x_limits(dates[0], dates[-1])
-    fig.set_y_limits(min(all_values), max(all_values))
-    fig.y_ticks_fkt = get_y_tick
+
+    # set_y_limits() needs min and max to be different, so ensure it's the case.
+    # Otherwise volume indicator will fail if all values are 0, e.g. for cad=x.
+    min_y = min(all_values)
+    max_y = max(all_values)
+    if min_y == max_y: max_y = min_y + 1
+    fig.set_y_limits(min_y, max_y)
 
     # Eventually get more color choices, but beware of compatibility issues
     # https://github.com/tammoippen/plotille/blob/master/plotille/_colors.py
