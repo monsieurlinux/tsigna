@@ -513,10 +513,9 @@ def get_y_tick(min_, max_):
 def add_moving_averages(df):
     # Calculate and add moving averages
     df = df.copy()
-    df['ma1'] = df['adjclose'].rolling(window=MOVING_AVG_1).mean()
-    df['ma2'] = df['adjclose'].rolling(window=MOVING_AVG_2).mean()
-    df['ma3'] = df['adjclose'].rolling(window=MOVING_AVG_3).mean()
-    df = df.fillna(0)
+    df['ma1'] = df['adjclose'].rolling(window=MOVING_AVG_1, min_periods=1).mean()
+    df['ma2'] = df['adjclose'].rolling(window=MOVING_AVG_2, min_periods=1).mean()
+    df['ma3'] = df['adjclose'].rolling(window=MOVING_AVG_3, min_periods=1).mean()
     return df
     
 
@@ -558,28 +557,27 @@ def add_mfi(df):
     avg_neg_mf = neg_mf.rolling(window=MFI_PERIOD, min_periods=1).mean()
     mfr = avg_pos_mf / (avg_neg_mf + 1e-10)  # Avoid division by zero
     df['mfi'] = 100 - (100 / (1 + mfr))  # Normalize to a scale of 0 to 100
-    df['mfi'] = df['mfi'].fillna(100)  # Fill NaN values
     return df
 
 
 def add_stochastics(df):
     # Calculate and add Stochastic Oscillator indicator
     df = df.copy()
-    low_min = df['low'].rolling(window=STOCH_K_PERIOD).min()    # Lowest low
-    high_max = df['high'].rolling(window=STOCH_K_PERIOD).max()  # Highest high
-    fast_k = ((df['close'] - low_min) / (high_max - low_min)) * 100  # Fast
-    df['stoch_k'] = fast_k.rolling(window=STOCH_K_SMOOTHING).mean()  # Smoothed
-    df['stoch_d'] = df['stoch_k'].rolling(window=STOCH_D_PERIOD).mean() # Slow
+    low_min = df['low'].rolling(window=STOCH_K_PERIOD, min_periods=1).min()
+    high_max = df['high'].rolling(window=STOCH_K_PERIOD, min_periods=1).max()
+    fast_k = ((df['close'] - low_min) / (high_max - low_min)) * 100
+    df['stoch_k'] = fast_k.rolling(window=STOCH_K_SMOOTHING, min_periods=1).mean()
+    df['stoch_d'] = df['stoch_k'].rolling(window=STOCH_D_PERIOD, min_periods=1).mean()
     return df
 
 
 def add_bollinger_bands(df):
     # Calculate and add Bollinger Bands indicator
     df = df.copy()
-    df['sma'] = df['adjclose'].rolling(window=BB_PERIOD).mean()  # Rolling mean
-    std = df['adjclose'].rolling(window=BB_PERIOD).std() # Rolling std deviation
-    df['upper'] = df['sma'] + (std * BB_STD_DEV)  # Upper band
-    df['lower'] = df['sma'] - (std * BB_STD_DEV)  # Lower band
+    df['sma'] = df['adjclose'].rolling(window=BB_PERIOD, min_periods=1).mean()
+    std = df['adjclose'].rolling(window=BB_PERIOD, min_periods=1).std()
+    df['upper'] = df['sma'] + (std * BB_STD_DEV)
+    df['lower'] = df['sma'] - (std * BB_STD_DEV)
     return df
 
 
@@ -638,6 +636,7 @@ def print_indicator_info():
 def log_data_frame(df, description = ''):
     """ This function is used only for debugging. """
     logger.debug(f'DataFrame {description}\n{df}')
+    #logger.debug(f'DataFrame {description}\n{df.head(20)}')
     #logger.debug(f'DataFrame index data type: {df.index.dtype}')
     #logger.debug(f'DataFrame index class: {type(df.index)}')
     #logger.debug(f'DataFrame columns data types\n{df.dtypes}')
