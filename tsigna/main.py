@@ -24,6 +24,7 @@ import shutil
 import sys
 import textwrap
 import time
+import tomllib
 from pathlib import Path
 
 # Third-party library imports
@@ -34,62 +35,14 @@ from curl_cffi import requests as curlreqs
 from yahooquery import Ticker  # Alternative fork: ybankinplay
 
 # Add project root to sys.path so script can be called directly w/o 'python3 -m'
-project_root = Path(__file__).resolve().parent.parent
-if str(project_root) not in sys.path:
-    sys.path.insert(0, str(project_root))
+PROJECT_ROOT = Path(__file__).resolve().parent.parent
+if str(PROJECT_ROOT) not in sys.path:
+    sys.path.insert(0, str(PROJECT_ROOT))
 
 # Local imports
 from tsigna import __version__
 
-# Configuration constants
-APP_NAME = "tsigna"
-CONFIG_DIR = Path.home() / f'.{APP_NAME}'
-CACHE_DIR = CONFIG_DIR / 'cache'
-CONFIG_DIR.mkdir(parents=True, exist_ok=True)
-CACHE_DIR.mkdir(parents=True, exist_ok=True)
-CACHE_ENABLE = True
-CACHE_EXPIRY = 300  # 300 seconds = 5 minutes
-YEARS_TO_PLOT = 1
-INDICATOR_HEIGHT_RATIO = 0.3
-MMRI_DIVISOR = 1.61
-MOVING_AVG_1 = 20
-MOVING_AVG_2 = 50
-MOVING_AVG_3 = 200
-BB_PERIOD = 20
-BB_STD_DEV = 2
-MACD_FAST_LEN = 12
-MACD_SLOW_LEN = 26
-MACD_SIGNAL_LEN = 9
-RSI_PERIOD = 14
-RSI_OVERBOUGHT_LEVEL = 70
-RSI_OVERSOLD_LEVEL = 30
-MFI_PERIOD = 14
-MFI_OVERBOUGHT_LEVEL = 80
-MFI_OVERSOLD_LEVEL = 20
-STOCH_K_PERIOD = 14
-STOCH_K_SMOOTHING = 3  # Set to 1 for fast stochastics
-STOCH_D_PERIOD = 3
-STOCH_OVERBOUGHT_LEVEL = 80
-STOCH_OVERSOLD_LEVEL = 20
-ATR_PERIOD = 14
-
-# Valid colors (standard 8-color ANSI palette):
-# black, red, green, yellow, blue, magenta, cyan, and white
-# An optional 'bright_' prefix can be added, e.g. 'bright_green'
-TEXT_COLOR = 'white'
-MAIN_LINE_COLOR = 'blue'
-OVERBOUGHT_COLOR = 'red'
-OVERSOLD_COLOR = 'green'
-MOVING_AVG_1_COLOR = 'green'
-MOVING_AVG_2_COLOR = 'yellow'
-MOVING_AVG_3_COLOR = 'red'
-BB_SMA_COLOR = 'yellow'
-BB_UPPER_BAND_COLOR = 'red'
-BB_LOWER_BAND_COLOR = 'green'
-MACD_SIGNAL_COLOR = 'red'
-MACD_HISTOGRAM_COLOR = 'green'
-STOCH_K_COLOR = 'blue'
-STOCH_D_COLOR = 'yellow'
+CONFIG = {}
 
 INDICATOR_DESCRIPTIONS = {
     "ATR (Average True Range)": {
@@ -139,11 +92,17 @@ logger = logging.getLogger(__name__)
 
 
 def main():
+    try:
+        load_config()
+    except FileNotFoundError as e:
+        logger.error(f'Failed to load config: {e}')
+        return
+
     parser = argparse.ArgumentParser()
 
-    parser.add_argument('ticker1', nargs='?',
+    parser.add_argument('ticker1', nargs='?', metavar='TICKER1', 
                         help='first or only ticker (or special MMRI ticker)')
-    parser.add_argument('ticker2', nargs='?',
+    parser.add_argument('ticker2', nargs='?', metavar='TICKER2', 
                         help='second ticker for ratio plot')
     parser.add_argument('-a', '--atr', action='store_true',
                         help='display ATR indicator (Average True Range)')
@@ -181,10 +140,10 @@ def main():
                         help='display volume')
     parser.add_argument('-W', '--volume-only', action='store_true',
                         help='display only volume')
-    parser.add_argument('-y', '--years', type=int, default=YEARS_TO_PLOT,
+    parser.add_argument('-y', '--years', type=int, default=CONFIG['plotting']['years_to_plot'],
                         help='set years to plot, use 0 for ytd (default: 1)')
     args = parser.parse_args()
-    
+
     ticker1, ticker2, plot_name = get_tickers_and_plot_name(args)
 
     if args.indicator_info:
@@ -251,15 +210,16 @@ def main():
             plot_data(df, plot_name, 'obv')
         else:
             num_ind = len(xtra_ind)
+            ratio = CONFIG['plotting']['indicator_height_ratio']
             if num_ind > 2:
                 logger.error(f'A maximum of two indicators can be displayed')
             elif num_ind == 2:
-                plot_data(df, plot_name, main_ind, 1-2*INDICATOR_HEIGHT_RATIO)
-                plot_data(df, plot_name, xtra_ind[0], INDICATOR_HEIGHT_RATIO)
-                plot_data(df, plot_name, xtra_ind[1], INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, main_ind, 1-2*ratio)
+                plot_data(df, plot_name, xtra_ind[0], ratio)
+                plot_data(df, plot_name, xtra_ind[1], ratio)
             elif num_ind == 1:
-                plot_data(df, plot_name, main_ind, 1-INDICATOR_HEIGHT_RATIO)
-                plot_data(df, plot_name, xtra_ind[0], INDICATOR_HEIGHT_RATIO)
+                plot_data(df, plot_name, main_ind, 1-ratio)
+                plot_data(df, plot_name, xtra_ind[0], ratio)
             else:
                 plot_data(df, plot_name, main_ind)
 
@@ -284,16 +244,18 @@ def get_tickers_and_plot_name(args):
 
 
 def get_data(ticker1, ticker2, no_cache=False):
+    cache_enable = CONFIG['cache']['enable']
+    cache_expiry = CONFIG['cache']['expiry']
     fetch_data = True
     df2 = pd.DataFrame()
     cache1 = Path(f'{CACHE_DIR}/{ticker1.lower()}.csv') if ticker1 else None
     cache2 = Path(f'{CACHE_DIR}/{ticker2.lower()}.csv') if ticker2 else None
 
-    if CACHE_ENABLE and not no_cache:
+    if cache_enable and not no_cache:
         fetch_data = False
         now = time.time()
 
-        if cache1.is_file() and (now - cache1.stat().st_mtime < CACHE_EXPIRY):
+        if cache1.is_file() and (now - cache1.stat().st_mtime < cache_expiry):
             logger.info(f'Getting {ticker1} data from cache')
             df1 = pd.read_csv(cache1, parse_dates=['date'])
             df1.set_index('date', inplace=True)
@@ -301,7 +263,7 @@ def get_data(ticker1, ticker2, no_cache=False):
             fetch_data = True
         
         if ticker2:
-            if cache2.is_file() and (now - cache2.stat().st_mtime < CACHE_EXPIRY):
+            if cache2.is_file() and (now - cache2.stat().st_mtime < cache_expiry):
                 logger.info(f'Getting {ticker2} data from cache')
                 df2 = pd.read_csv(cache2, parse_dates=['date'])
                 df2.set_index('date', inplace=True)
@@ -315,11 +277,11 @@ def get_data(ticker1, ticker2, no_cache=False):
 
         df = tickers.history(period='10y', interval='1d')
         df1 = df.loc[ticker1]
-        if CACHE_ENABLE: df1.to_csv(cache1, index=True)
+        if cache_enable: df1.to_csv(cache1, index=True)
 
         if ticker2:
             df2 = df.loc[ticker2]
-            if CACHE_ENABLE: df2.to_csv(cache2, index=True)
+            if cache_enable: df2.to_csv(cache2, index=True)
 
     # Make sure all dates have the same format (remove time from last date)
     # normalize() sets the time to midnight while keeping pandas dates types
@@ -353,7 +315,7 @@ def process_data(df1, df2, years, plot_name, main_ind = 'ma' , xtra_ind = []):
 
         # Calculate the values using vectorized operations
         if plot_name == 'MMRI':
-            values = (values1 * values2) / MMRI_DIVISOR
+            values = (values1 * values2) / 1.61
         else:
             values = values1 / values2
 
@@ -402,21 +364,27 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         all_values = macd + signal + histogram
     elif plot_type == 'rsi':
         rsi = df['rsi'].tolist()
-        overbought = [RSI_OVERBOUGHT_LEVEL] * len(dates)
-        oversold = [RSI_OVERSOLD_LEVEL] * len(dates)
+        ob_level = CONFIG['indicators']['rsi']['overbought_level']
+        os_level = CONFIG['indicators']['rsi']['oversold_level']
+        overbought = [ob_level] * len(dates)
+        oversold = [os_level] * len(dates)
         # The '+5' and '-5' are to make sure the overbought/sold lines are shown
-        all_values = rsi + [RSI_OVERBOUGHT_LEVEL+5] + [RSI_OVERSOLD_LEVEL-5]
+        all_values = rsi + [ob_level+5] + [os_level-5]
     elif plot_type == 'mfi':
         mfi = df['mfi'].tolist()
-        overbought = [MFI_OVERBOUGHT_LEVEL] * len(dates)
-        oversold = [MFI_OVERSOLD_LEVEL] * len(dates)
-        all_values = mfi + [MFI_OVERBOUGHT_LEVEL+5] + [MFI_OVERSOLD_LEVEL-5]
+        ob_level = CONFIG['indicators']['mfi']['overbought_level']
+        os_level = CONFIG['indicators']['mfi']['oversold_level']
+        overbought = [ob_level] * len(dates)
+        oversold = [os_level] * len(dates)
+        all_values = mfi + [ob_level+5] + [os_level-5]
     elif plot_type == 'stoch':
         stoch_k = df['stoch_k'].tolist()
         stoch_d = df['stoch_d'].tolist()
-        overbought = [STOCH_OVERBOUGHT_LEVEL] * len(dates)
-        oversold = [STOCH_OVERSOLD_LEVEL] * len(dates)
-        all_values = stoch_k + stoch_d + [STOCH_OVERBOUGHT_LEVEL+5] + [STOCH_OVERSOLD_LEVEL-5]
+        ob_level = CONFIG['indicators']['stochastics']['overbought_level']
+        os_level = CONFIG['indicators']['stochastics']['oversold_level']
+        overbought = [ob_level] * len(dates)
+        oversold = [os_level] * len(dates)
+        all_values = stoch_k + stoch_d + [ob_level+5] + [os_level-5]
     elif plot_type == 'atr':
         atr = df['atr'].tolist()
         all_values = atr
@@ -457,56 +425,59 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     #fig.color_mode = 'rgb'
 
     # Prepare the plots and text to display
+    main_line_color = CONFIG['plotting']['colors']['main_line']
+    overbought_color = CONFIG['plotting']['colors']['overbought']
+    oversold_color = CONFIG['plotting']['colors']['oversold']
     if plot_type == 'vol':
-        fig.plot(dates, volume, lc=MAIN_LINE_COLOR)
+        fig.plot(dates, volume, lc=main_line_color)
         last = f'{volume[-1]:,.0f}'
         text = f'Volume last value: {last}'
     elif plot_type == 'macd':
-        fig.plot(dates, signal, lc=MACD_SIGNAL_COLOR)
-        fig.plot(dates, macd, lc=MAIN_LINE_COLOR)
-        fig.plot(dates, histogram, lc=MACD_HISTOGRAM_COLOR)
+        fig.plot(dates, signal, lc=CONFIG['indicators']['macd']['colors']['signal'])
+        fig.plot(dates, macd, lc=main_line_color)
+        fig.plot(dates, histogram, lc=CONFIG['indicators']['macd']['colors']['histogram'])
         last = f'{histogram[-1]:,.2f}'
         text = f'MACD histogram last value: {last}'
     elif plot_type == 'rsi':
-        fig.plot(dates, overbought, lc=OVERBOUGHT_COLOR)
-        fig.plot(dates, oversold, lc=OVERSOLD_COLOR)
-        fig.plot(dates, rsi, lc=MAIN_LINE_COLOR)
+        fig.plot(dates, overbought, lc=overbought_color)
+        fig.plot(dates, oversold, lc=oversold_color)
+        fig.plot(dates, rsi, lc=main_line_color)
         last = f'{rsi[-1]:,.2f}'
         text = f'RSI last value: {last}'
     elif plot_type == 'mfi':
-        fig.plot(dates, overbought, lc=OVERBOUGHT_COLOR)
-        fig.plot(dates, oversold, lc=OVERSOLD_COLOR)
-        fig.plot(dates, mfi, lc=MAIN_LINE_COLOR)
+        fig.plot(dates, overbought, lc=overbought_color)
+        fig.plot(dates, oversold, lc=oversold_color)
+        fig.plot(dates, mfi, lc=main_line_color)
         last = f'{mfi[-1]:,.2f}'
         text = f'MFI last value: {last}'
     elif plot_type == 'stoch':
-        fig.plot(dates, overbought, lc=OVERBOUGHT_COLOR)
-        fig.plot(dates, oversold, lc=OVERSOLD_COLOR)
-        fig.plot(dates, stoch_k, lc=STOCH_K_COLOR)
-        fig.plot(dates, stoch_d, lc=STOCH_D_COLOR)
+        fig.plot(dates, overbought, lc=overbought_color)
+        fig.plot(dates, oversold, lc=oversold_color)
+        fig.plot(dates, stoch_k, lc=CONFIG['indicators']['stochastics']['colors']['k_line'])
+        fig.plot(dates, stoch_d, lc=CONFIG['indicators']['stochastics']['colors']['d_line'])
         last = f'{stoch_d[-1]:,.2f}'
         text = f'Stochastics last value: {last}'
     elif plot_type == 'atr':
-        fig.plot(dates, atr, lc=MAIN_LINE_COLOR)
+        fig.plot(dates, atr, lc=main_line_color)
         last = f'{atr[-1]:,.2f}'
         text = f'ATR last value: {last}'
     elif plot_type == 'obv':
-        fig.plot(dates, obv, lc=MAIN_LINE_COLOR)
+        fig.plot(dates, obv, lc=main_line_color)
         last = f'{obv[-1]:,.0f}'
         text = f'OBV last value: {last}'
     elif plot_type == 'bb':
-        fig.plot(dates, sma, lc=BB_SMA_COLOR)
-        fig.plot(dates, close, lc=MAIN_LINE_COLOR)
-        fig.plot(dates, upper, lc=BB_UPPER_BAND_COLOR)
-        fig.plot(dates, lower, lc=BB_LOWER_BAND_COLOR)
+        fig.plot(dates, sma, lc=CONFIG['indicators']['bollinger_bands']['colors']['sma'])
+        fig.plot(dates, close, lc=main_line_color)
+        fig.plot(dates, upper, lc=CONFIG['indicators']['bollinger_bands']['colors']['upper_band'])
+        fig.plot(dates, lower, lc=CONFIG['indicators']['bollinger_bands']['colors']['lower_band'])
         last = f'{close[-1]:.4f}' if close[-1] < 10 else f'{close[-1]:,.2f}'
         change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
         text = f'{plot_name} last value: {last} ({change}%)'
     else:  # Main plot with moving averages
-        fig.plot(dates, ma3, lc=MOVING_AVG_3_COLOR)
-        fig.plot(dates, ma2, lc=MOVING_AVG_2_COLOR)
-        fig.plot(dates, ma1, lc=MOVING_AVG_1_COLOR)
-        fig.plot(dates, close, lc=MAIN_LINE_COLOR)
+        fig.plot(dates, ma3, lc=CONFIG['indicators']['moving_averages']['colors']['ma_3'])
+        fig.plot(dates, ma2, lc=CONFIG['indicators']['moving_averages']['colors']['ma_2'])
+        fig.plot(dates, ma1, lc=CONFIG['indicators']['moving_averages']['colors']['ma_1'])
+        fig.plot(dates, close, lc=main_line_color)
         last = f'{close[-1]:.4f}' if close[-1] < 10 else f'{close[-1]:,.2f}'
         change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
         text = f'{plot_name} last value: {last} ({change}%)'
@@ -514,7 +485,7 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     # Display the last value text
     x = dates[0] + (dates[-1] - dates[0]) * 0.55
     y = min(all_values)
-    fig.text([x], [y], [text], lc=TEXT_COLOR)
+    fig.text([x], [y], [text], lc=CONFIG['plotting']['colors']['text'])
 
     print(fig.show(legend=False))
 
@@ -538,19 +509,19 @@ def get_y_tick(min_, max_):
 def add_moving_averages(df):
     # Calculate and add moving averages
     df = df.copy()
-    df['ma1'] = df['adjclose'].rolling(window=MOVING_AVG_1, min_periods=1).mean()
-    df['ma2'] = df['adjclose'].rolling(window=MOVING_AVG_2, min_periods=1).mean()
-    df['ma3'] = df['adjclose'].rolling(window=MOVING_AVG_3, min_periods=1).mean()
+    df['ma1'] = df['adjclose'].rolling(window=CONFIG['indicators']['moving_averages']['ma_1'], min_periods=1).mean()
+    df['ma2'] = df['adjclose'].rolling(window=CONFIG['indicators']['moving_averages']['ma_2'], min_periods=1).mean()
+    df['ma3'] = df['adjclose'].rolling(window=CONFIG['indicators']['moving_averages']['ma_3'], min_periods=1).mean()
     return df
     
 
 def add_macd(df):
     # Calculate and add MACD indicator (Moving Average Convergence Divergence)
     df = df.copy()
-    fast = df['adjclose'].ewm(span=MACD_FAST_LEN, adjust=False).mean()
-    slow = df['adjclose'].ewm(span=MACD_SLOW_LEN, adjust=False).mean()
+    fast = df['adjclose'].ewm(span=CONFIG['indicators']['macd']['fast_len'], adjust=False).mean()
+    slow = df['adjclose'].ewm(span=CONFIG['indicators']['macd']['slow_len'], adjust=False).mean()
     df['macd'] = fast - slow
-    df['signal'] = df['macd'].ewm(span=MACD_SIGNAL_LEN, adjust=False).mean()
+    df['signal'] = df['macd'].ewm(span=CONFIG['indicators']['macd']['signal_len'], adjust=False).mean()
     df['histogram'] = df['macd'] - df['signal']
     return df
     
@@ -560,11 +531,12 @@ def add_rsi(df):
     # Calculate the average gain and average loss using Wilder's Smoothing
     # We use a 'com' span of period-1 to match the standard RSI calculation
     df = df.copy()
+    period = CONFIG['indicators']['rsi']['period']
     delta = df['adjclose'].diff()       # Difference from the previous day
     gain = delta.where(delta > 0, 0)    # Keep gains and replace losses with 0
     loss = -delta.where(delta < 0, 0)   # keep -losses and replace gains with 0
-    avg_gain = gain.ewm(com=RSI_PERIOD-1, adjust=False).mean()  # Average gain
-    avg_loss = loss.ewm(com=RSI_PERIOD-1, adjust=False).mean()  # Average loss
+    avg_gain = gain.ewm(com=period-1, adjust=False).mean()  # Average gain
+    avg_loss = loss.ewm(com=period-1, adjust=False).mean()  # Average loss
     rs = avg_gain / (avg_loss + 1e-10)  # RS (avoid division by zero)
     df['rsi'] = 100 - (100 / (1 + rs))  # RSI (normalize to a scale of 0 to 100)
     return df
@@ -573,13 +545,14 @@ def add_rsi(df):
 def add_mfi(df):
     # Calculate and add MFI indicator (Money Flow Index)
     df = df.copy()
+    period = CONFIG['indicators']['mfi']['period']
     typical_price = (df['high'] + df['low'] + df['close']) / 3
     money_flow = typical_price * df['volume']
     delta = typical_price.diff()  # Difference from the previous day
     pos_mf = money_flow.where(delta > 0, 0)  # Positive money flow
     neg_mf = money_flow.where(delta < 0, 0)  # Negative money flow
-    avg_pos_mf = pos_mf.rolling(window=MFI_PERIOD, min_periods=1).mean()
-    avg_neg_mf = neg_mf.rolling(window=MFI_PERIOD, min_periods=1).mean()
+    avg_pos_mf = pos_mf.rolling(window=period, min_periods=1).mean()
+    avg_neg_mf = neg_mf.rolling(window=period, min_periods=1).mean()
     mfr = avg_pos_mf / (avg_neg_mf + 1e-10)  # Avoid division by zero
     df['mfi'] = 100 - (100 / (1 + mfr))  # Normalize to a scale of 0 to 100
     return df
@@ -588,21 +561,23 @@ def add_mfi(df):
 def add_stochastics(df):
     # Calculate and add Stochastic Oscillator indicator
     df = df.copy()
-    low_min = df['low'].rolling(window=STOCH_K_PERIOD, min_periods=1).min()
-    high_max = df['high'].rolling(window=STOCH_K_PERIOD, min_periods=1).max()
+    low_min = df['low'].rolling(window=CONFIG['indicators']['stochastics']['k_period'], min_periods=1).min()
+    high_max = df['high'].rolling(window=CONFIG['indicators']['stochastics']['k_period'], min_periods=1).max()
     fast_k = ((df['close'] - low_min) / (high_max - low_min)) * 100
-    df['stoch_k'] = fast_k.rolling(window=STOCH_K_SMOOTHING, min_periods=1).mean()
-    df['stoch_d'] = df['stoch_k'].rolling(window=STOCH_D_PERIOD, min_periods=1).mean()
+    df['stoch_k'] = fast_k.rolling(window=CONFIG['indicators']['stochastics']['k_smoothing'], min_periods=1).mean()
+    df['stoch_d'] = df['stoch_k'].rolling(window=CONFIG['indicators']['stochastics']['d_period'], min_periods=1).mean()
     return df
 
 
 def add_bollinger_bands(df):
     # Calculate and add Bollinger Bands indicator
     df = df.copy()
-    df['sma'] = df['adjclose'].rolling(window=BB_PERIOD, min_periods=1).mean()
-    std = df['adjclose'].rolling(window=BB_PERIOD, min_periods=1).std()
-    df['upper'] = df['sma'] + (std * BB_STD_DEV)
-    df['lower'] = df['sma'] - (std * BB_STD_DEV)
+    period = CONFIG['indicators']['bollinger_bands']['period']
+    std_dev = CONFIG['indicators']['bollinger_bands']['std_dev']
+    df['sma'] = df['adjclose'].rolling(window=period, min_periods=1).mean()
+    std = df['adjclose'].rolling(window=period, min_periods=1).std()
+    df['upper'] = df['sma'] + (std * std_dev)
+    df['lower'] = df['sma'] - (std * std_dev)
     return df
 
 
@@ -613,7 +588,7 @@ def add_atr(df):
     tr2 = (df['high'] - df['close'].shift()).abs()      # high - previous close
     tr3 = (df['low'] - df['close'].shift()).abs()       # low - previous close
     tr = pd.concat([tr1, tr2, tr3], axis=1).max(axis=1) # Max of the 3 components
-    df['atr'] = tr.ewm(com=ATR_PERIOD-1, adjust=False).mean() # Wilder's Smoothing
+    df['atr'] = tr.ewm(com=CONFIG['indicators']['atr']['period']-1, adjust=False).mean() # Wilder's Smoothing
     return df
 
 
@@ -626,6 +601,36 @@ def add_obv(df):
     direction = direction.mask(price_change == 0, 0)    # Set to 0 if no change
     df['obv'] = (direction * df['volume']).cumsum()
     return df
+
+
+def load_config():
+    global CONFIG, CACHE_DIR
+
+    app_name = 'tsigna'
+    config_file = 'config.toml'
+
+    config_dir = Path.home() / f'.{app_name}'
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    CACHE_DIR = config_dir / 'cache'
+    CACHE_DIR.mkdir(parents=True, exist_ok=True)
+
+    user_config_file = config_dir / config_file
+    default_config_file = PROJECT_ROOT / config_file
+
+    if not user_config_file.exists():
+        logger.info(f'Config file not found at {user_config_file}')
+
+        if default_config_file.exists():
+            shutil.copy2(default_config_file, user_config_file)
+            logger.info(f'Config initialized at {user_config_file}')
+        else:
+            raise FileNotFoundError(f'Default config missing at {default_config_file}')
+    else:
+        logger.info(f'Found config file at {user_config_file}')
+
+    with open(user_config_file, "rb") as f:
+        CONFIG = tomllib.load(f)
 
 
 def print_indicator_info():
