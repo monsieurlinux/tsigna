@@ -140,7 +140,7 @@ def main():
                         help='display volume')
     parser.add_argument('-W', '--volume-only', action='store_true',
                         help='display only volume')
-    parser.add_argument('-y', '--years', type=int, default=CONFIG['plotting']['years_to_plot'],
+    parser.add_argument('-y', '--years', type=int, default=CONFIG['plot']['years_to_plot'],
                         help='set years to plot, use 0 for ytd (default: 1)')
     args = parser.parse_args()
 
@@ -210,7 +210,7 @@ def main():
             plot_data(df, plot_name, 'obv')
         else:
             num_ind = len(xtra_ind)
-            ratio = CONFIG['plotting']['indicator_height_ratio']
+            ratio = CONFIG['plot']['indicator_height_ratio']
             if num_ind > 2:
                 logger.error(f'A maximum of two indicators can be displayed')
             elif num_ind == 2:
@@ -380,8 +380,8 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     elif plot_type == 'stoch':
         stoch_k = df['stoch_k'].tolist()
         stoch_d = df['stoch_d'].tolist()
-        ob_level = CONFIG['stochastics']['overbought_level']
-        os_level = CONFIG['stochastics']['oversold_level']
+        ob_level = CONFIG['stoch']['overbought_level']
+        os_level = CONFIG['stoch']['oversold_level']
         overbought = [ob_level] * len(dates)
         oversold = [os_level] * len(dates)
         all_values = stoch_k + stoch_d + [ob_level+5] + [os_level-5]
@@ -425,9 +425,9 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     #fig.color_mode = 'rgb'
 
     # Prepare the plots and text to display
-    main_line_color = CONFIG['plotting']['colors']['main_line']
-    overbought_color = CONFIG['plotting']['colors']['overbought']
-    oversold_color = CONFIG['plotting']['colors']['oversold']
+    main_line_color = CONFIG['plot']['colors']['main_line']
+    overbought_color = CONFIG['plot']['colors']['overbought']
+    oversold_color = CONFIG['plot']['colors']['oversold']
     if plot_type == 'vol':
         fig.plot(dates, volume, lc=main_line_color)
         last = f'{volume[-1]:,.0f}'
@@ -453,8 +453,8 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     elif plot_type == 'stoch':
         fig.plot(dates, overbought, lc=overbought_color)
         fig.plot(dates, oversold, lc=oversold_color)
-        fig.plot(dates, stoch_k, lc=CONFIG['stochastics']['colors']['k_line'])
-        fig.plot(dates, stoch_d, lc=CONFIG['stochastics']['colors']['d_line'])
+        fig.plot(dates, stoch_k, lc=CONFIG['stoch']['colors']['k_line'])
+        fig.plot(dates, stoch_d, lc=CONFIG['stoch']['colors']['d_line'])
         last = f'{stoch_d[-1]:,.2f}'
         text = f'Stochastics last value: {last}'
     elif plot_type == 'atr':
@@ -466,17 +466,17 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         last = f'{obv[-1]:,.0f}'
         text = f'OBV last value: {last}'
     elif plot_type == 'bb':
-        fig.plot(dates, sma, lc=CONFIG['bollinger_bands']['colors']['sma'])
+        fig.plot(dates, sma, lc=CONFIG['bb']['colors']['sma'])
         fig.plot(dates, close, lc=main_line_color)
-        fig.plot(dates, upper, lc=CONFIG['bollinger_bands']['colors']['upper_band'])
-        fig.plot(dates, lower, lc=CONFIG['bollinger_bands']['colors']['lower_band'])
+        fig.plot(dates, upper, lc=CONFIG['bb']['colors']['upper_band'])
+        fig.plot(dates, lower, lc=CONFIG['bb']['colors']['lower_band'])
         last = f'{close[-1]:.4f}' if close[-1] < 10 else f'{close[-1]:,.2f}'
         change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
         text = f'{plot_name} last value: {last} ({change}%)'
     else:  # Main plot with moving averages
-        fig.plot(dates, ma3, lc=CONFIG['moving_averages']['colors']['ma_3'])
-        fig.plot(dates, ma2, lc=CONFIG['moving_averages']['colors']['ma_2'])
-        fig.plot(dates, ma1, lc=CONFIG['moving_averages']['colors']['ma_1'])
+        fig.plot(dates, ma3, lc=CONFIG['ma']['colors']['ma_3'])
+        fig.plot(dates, ma2, lc=CONFIG['ma']['colors']['ma_2'])
+        fig.plot(dates, ma1, lc=CONFIG['ma']['colors']['ma_1'])
         fig.plot(dates, close, lc=main_line_color)
         last = f'{close[-1]:.4f}' if close[-1] < 10 else f'{close[-1]:,.2f}'
         change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
@@ -485,7 +485,7 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     # Display the last value text
     x = dates[0] + (dates[-1] - dates[0]) * 0.55
     y = min(all_values)
-    fig.text([x], [y], [text], lc=CONFIG['plotting']['colors']['text'])
+    fig.text([x], [y], [text], lc=CONFIG['plot']['colors']['text'])
 
     print(fig.show(legend=False))
 
@@ -509,9 +509,9 @@ def get_y_tick(min_, max_):
 def add_moving_averages(df):
     # Calculate and add moving averages
     df = df.copy()
-    df['ma1'] = df['adjclose'].rolling(window=CONFIG['moving_averages']['ma_1'], min_periods=1).mean()
-    df['ma2'] = df['adjclose'].rolling(window=CONFIG['moving_averages']['ma_2'], min_periods=1).mean()
-    df['ma3'] = df['adjclose'].rolling(window=CONFIG['moving_averages']['ma_3'], min_periods=1).mean()
+    df['ma1'] = df['adjclose'].rolling(window=CONFIG['ma']['ma_1'], min_periods=1).mean()
+    df['ma2'] = df['adjclose'].rolling(window=CONFIG['ma']['ma_2'], min_periods=1).mean()
+    df['ma3'] = df['adjclose'].rolling(window=CONFIG['ma']['ma_3'], min_periods=1).mean()
     return df
     
 
@@ -561,19 +561,19 @@ def add_mfi(df):
 def add_stochastics(df):
     # Calculate and add Stochastic Oscillator indicator
     df = df.copy()
-    low_min = df['low'].rolling(window=CONFIG['stochastics']['k_period'], min_periods=1).min()
-    high_max = df['high'].rolling(window=CONFIG['stochastics']['k_period'], min_periods=1).max()
+    low_min = df['low'].rolling(window=CONFIG['stoch']['k_period'], min_periods=1).min()
+    high_max = df['high'].rolling(window=CONFIG['stoch']['k_period'], min_periods=1).max()
     fast_k = ((df['close'] - low_min) / (high_max - low_min)) * 100
-    df['stoch_k'] = fast_k.rolling(window=CONFIG['stochastics']['k_smoothing'], min_periods=1).mean()
-    df['stoch_d'] = df['stoch_k'].rolling(window=CONFIG['stochastics']['d_period'], min_periods=1).mean()
+    df['stoch_k'] = fast_k.rolling(window=CONFIG['stoch']['k_smoothing'], min_periods=1).mean()
+    df['stoch_d'] = df['stoch_k'].rolling(window=CONFIG['stoch']['d_period'], min_periods=1).mean()
     return df
 
 
 def add_bollinger_bands(df):
     # Calculate and add Bollinger Bands indicator
     df = df.copy()
-    period = CONFIG['bollinger_bands']['period']
-    std_dev = CONFIG['bollinger_bands']['std_dev']
+    period = CONFIG['bb']['period']
+    std_dev = CONFIG['bb']['std_dev']
     df['sma'] = df['adjclose'].rolling(window=period, min_periods=1).mean()
     std = df['adjclose'].rolling(window=period, min_periods=1).std()
     df['upper'] = df['sma'] + (std * std_dev)
