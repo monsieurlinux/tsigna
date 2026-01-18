@@ -14,55 +14,55 @@ main_line = "blue"
 overbought = "red"
 oversold = "green"
 
-[indicators.moving_averages]
+[moving_averages]
 ma_1 = 20
 ma_2 = 50
 ma_3 = 200
 
-[indicators.moving_averages.colors]
+[moving_averages.colors]
 ma_1 = "green"
 ma_2 = "yellow"
 ma_3 = "red"
 
-[indicators.bollinger_bands]
+[bollinger_bands]
 period = 20
 std_dev = 2
 
-[indicators.bollinger_bands.colors]
+[bollinger_bands.colors]
 sma = "yellow"
 upper_band = "red"
 lower_band = "green"
 
-[indicators.macd]
+[macd]
 fast_len = 12
 slow_len = 26
 signal_len = 9
 
-[indicators.macd.colors]
+[macd.colors]
 signal = "red"
 histogram = "green"
 
-[indicators.rsi]
+[rsi]
 period = 14
 overbought_level = 70
 oversold_level = 30
 
-[indicators.mfi]
+[mfi]
 period = 14
 overbought_level = 80
 oversold_level = 20
 
-[indicators.stochastics]
+[stochastics]
 k_period = 14
 k_smoothing = 3  # Set to 1 for fast stochastics
 d_period = 3
 overbought_level = 80
 oversold_level = 20
 
-[indicators.stochastics.colors]
+[stochastics.colors]
 k_line = "blue"
 d_line = "yellow"
 
-[indicators.atr]
+[atr]
 period = 14
 
