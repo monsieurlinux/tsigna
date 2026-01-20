@@ -20,6 +20,7 @@ Licensed under the MIT License. See the LICENSE file for details.
 import argparse
 import logging
 import math
+import os
 import shutil
 import sys
 import textwrap
@@ -135,7 +136,7 @@ def main():
     parser.add_argument('-S', '--stoch-only', action='store_true',
                         help='display only Stochastics indicator')
     parser.add_argument('-v', '--version', action='version', 
-                        version=f"%(prog)s {__version__}")
+                        version=f'%(prog)s {__version__}')
     parser.add_argument('-w', '--volume', action='store_true',
                         help='display volume')
     parser.add_argument('-W', '--volume-only', action='store_true',
@@ -497,11 +498,11 @@ def get_y_tick(min_, max_):
     if min_ > 9999999999:
         tick = min_            # Leave the tick in scientific notation
     elif min_ > 999999.99:
-        tick = f"{min_:.4e}"   # Convert the tick to scientific notation
+        tick = f'{min_:.4e}'   # Convert the tick to scientific notation
     elif min_ < 10:
-        tick = f"{min_:.4f}"  # Show 4 decimals
+        tick = f'{min_:.4f}'   # Show 4 decimals
     else:
-        tick = f"{min_:,.2f}"  # Show 2 decimals and thousands separator
+        tick = f'{min_:,.2f}'  # Show 2 decimals and thousands separator
 
     return tick
 
@@ -609,28 +610,48 @@ def load_config():
     app_name = 'tsigna'
     config_file = 'config.toml'
 
-    config_dir = Path.home() / f'.{app_name}'
-    config_dir.mkdir(parents=True, exist_ok=True)
-
-    CACHE_DIR = config_dir / 'cache'
-    CACHE_DIR.mkdir(parents=True, exist_ok=True)
-
+    config_dir = get_config_dir(app_name)
+    CACHE_DIR = get_cache_dir(config_dir)
     user_config_file = config_dir / config_file
     default_config_file = PROJECT_ROOT / config_file
 
     if not user_config_file.exists():
-        logger.info(f'Config file not found at {user_config_file}')
-
         if default_config_file.exists():
             shutil.copy2(default_config_file, user_config_file)
-            logger.info(f'Config initialized at {user_config_file}')
+            logger.debug(f'Config initialized at {user_config_file}')
         else:
             raise FileNotFoundError(f'Default config missing at {default_config_file}')
     else:
-        logger.info(f'Found config file at {user_config_file}')
+        logger.debug(f'Found config file at {user_config_file}')
 
-    with open(user_config_file, "rb") as f:
+    with open(user_config_file, 'rb') as f:
         CONFIG = tomllib.load(f)
+
+
+def get_config_dir(app_name):
+    if sys.platform == "win32":
+        # Windows: Use %APPDATA% (%USERPROFILE%\AppData\Roaming)
+        config_dir = Path(os.environ.get("APPDATA", "")) / app_name
+    elif sys.platform == "darwin":
+        # macOS: Use ~/Library/Preferences
+        config_dir = Path.home() / "Library" / "Preferences" / app_name
+    else:
+        # Linux and other Unix-like: Use ~/.config or XDG_CONFIG_HOME if set
+        config_home = os.environ.get("XDG_CONFIG_HOME", "")
+        if config_home:
+            config_dir = Path(config_home) / app_name
+        else:
+            config_dir = Path.home() / ".config" / app_name
+    
+    config_dir.mkdir(parents=True, exist_ok=True)
+
+    return config_dir
+
+
+def get_cache_dir(config_dir):
+    cache_dir = config_dir / 'cache'
+    cache_dir.mkdir(parents=True, exist_ok=True)
+    return cache_dir
 
 
 def print_indicator_info():
@@ -645,16 +666,16 @@ def print_indicator_info():
         wrapper = textwrap.TextWrapper(width=width, initial_indent=indent,
                                        subsequent_indent=indent)
         description = wrapper.fill(description)
-        print(f"\n{title}")
+        print(f'\n{title}')
         print(description)
 
     # Print a section with the indicator categories descriptions
     title = plotille.color('INDICATOR CATEGORIES', fg='green')
-    print(f"\n{title}")
+    print(f'\n{title}')
 
     for category, description in INDICATOR_CATEGORIES.items():
         category = plotille.color(category, fg='blue')
-        description = f"{category} - {description}"
+        description = f'{category} - {description}'
         wrapper = textwrap.TextWrapper(width=width, initial_indent=indent,
                                        subsequent_indent=indent)
         description = wrapper.fill(description)
