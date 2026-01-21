@@ -613,7 +613,7 @@ def load_config():
     config_dir = get_config_dir(app_name)
     CACHE_DIR = get_cache_dir(config_dir)
     user_config_file = config_dir / config_file
-    default_config_file = PROJECT_ROOT / config_file
+    default_config_file = PROJECT_ROOT / app_name / config_file
 
     if not user_config_file.exists():
         if default_config_file.exists():
