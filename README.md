@@ -72,7 +72,7 @@ pip install tsigna
 ### Basic Usage
 
 ```bash
-tsigna [arguments] ticker1 [ticker2]
+tsigna [arguments] [TICKER1] [TICKER2]
 ```
 
 ### Command-Line Arguments
@@ -99,6 +99,16 @@ tsigna [arguments] ticker1 [ticker2]
 | `--volume`         | `-w`       | Display volume                                               |
 | `--volume-only`    | `-W`       | Display **only** volume                                      |
 | `--years`          | `-y`       | Set years to plot, use 0 for ytd (default: 1)                |
+
+## Configuration
+
+When you run Tsigna for the first time, a `config.toml` file is automatically created. Its location depends on your operating system (typical paths are listed below):
+
+*   **Linux:** `~/.config/tsigna`
+*   **macOS:** `~/Library/Preferences/tsigna`
+*   **Windows:** `C:/Users/YourUsername/AppData/Roaming/tsigna`
+
+You can edit this file to customize various settings. Common customizations include changing the expiration time of the cache (or disabling it), modifying the line colors, or changing the parameters of the technical indicators.
 
 ## Not Financial Advice
 
