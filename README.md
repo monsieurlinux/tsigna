@@ -2,6 +2,9 @@
 
 # Tsigna
 
+[![PyPI][pypi-badge]][pypi-link]
+[![License][license-badge]][license-link]
+
 Tsigna is a Python financial analysis tool that runs entirely in the terminal. It is most useful for medium-term trading. It fetches historical stock data from Yahoo Finance, calculates technical indicators including moving averages, MACD, and RSI, and displays them as text-based charts using the plotille library. The tool supports single ticker analysis, ratio comparisons between two tickers, and a special MMRI calculation. Users can customize the time period and split the terminal display to show multiple indicators simultaneously.
 
 ![NVDA stock price, Bollinger Bands and Stochastics over 1 year](https://github.com/monsieurlinux/tsigna/raw/main/img/tsigna-nvda-bollinger-bands-stochastics-1y.png "NVDA stock price, Bollinger Bands and Stochastics over 1 year")
@@ -16,9 +19,9 @@ Originally I was looking for a free online tool to plot the **ratio between two 
 
 Tsigna requires the following external libraries:
 
-* **[pandas](https://github.com/pandas-dev/pandas)**: Used for data manipulation and analysis.
-* **[plotille](https://github.com/tammoippen/plotille)**: Used for creating terminal-based plots.
-* **[yahooquery](https://github.com/dpguthrie/yahooquery)**: Used for fetching financial data from Yahoo Finance.
+* **[pandas][pandas-link]**: Used for data manipulation and analysis.
+* **[plotille][plotille-link]**: Used for creating terminal-based plots.
+* **[yahooquery][yahooquery-link]**: Used for fetching financial data from Yahoo Finance.
 
 These libraries and their sub-dependencies will be installed automatically when you install Tsigna.
 
@@ -125,3 +128,11 @@ This project is licensed under the MIT License. See the LICENSE file for details
 Tsigna is not doing much more than getting data from [yahooquery](https://github.com/dpguthrie/yahooquery), processing it with [pandas](https://github.com/pandas-dev/pandas), and plotting it with [plotille](https://github.com/tammoippen/plotille), so thanks to the creators and contributors of these powerful libraries for making it possible.
 
 Thanks also to the [ticker](https://github.com/achannarasappa/ticker) tool, which is very useful to track prices in real time from the terminal.
+
+[pypi-badge]: https://img.shields.io/pypi/v/tsigna.svg
+[pypi-link]: https://pypi.org/project/tsigna/
+[license-badge]: https://img.shields.io/pypi/l/tsigna.svg
+[license-link]: https://github.com/monsieurlinux/tsigna/blob/main/LICENSE
+[pandas-link]: https://github.com/pandas-dev/pandas
+[plotille-link]: https://github.com/tammoippen/plotille
+[yahooquery-link]: https://github.com/dpguthrie/yahooquery
