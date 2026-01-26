@@ -143,7 +143,7 @@ Thanks also to the [ticker][ticker-link] tool, which is very useful to track pri
 [plotille-link]: https://github.com/tammoippen/plotille
 [pypi-badge]: https://img.shields.io/pypi/v/tsigna.svg
 [pypi-link]: https://pypi.org/project/tsigna/
-[pypi-releases]: https://pypi.org/project/your-package-name/#history
+[pypi-releases]: https://pypi.org/project/tsigna/#history
 [ticker-link]: https://github.com/achannarasappa/ticker
 [venv-link]: https://docs.python.org/3/tutorial/venv.html
 [yahooquery-link]: https://github.com/dpguthrie/yahooquery
