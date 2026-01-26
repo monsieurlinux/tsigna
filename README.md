@@ -70,6 +70,13 @@ If you prefer to manage the virtual environment manually, you can create and act
 pip install tsigna
 ```
 
+## Deployments
+
+View all releases on:
+
+- **[PyPI Releases][pypi-releases]**
+- **[GitHub Releases][github-releases]**
+
 ## Usage
 
 ### Basic Usage
@@ -129,12 +136,14 @@ Tsigna is not doing much more than getting data from [yahooquery][yahooquery-lin
 
 Thanks also to the [ticker][ticker-link] tool, which is very useful to track prices in real time from the terminal.
 
+[github-releases]: https://github.com/monsieurlinux/tsigna/releases
 [license-badge]: https://img.shields.io/pypi/l/tsigna.svg
 [license-link]: https://github.com/monsieurlinux/tsigna/blob/main/LICENSE
 [pandas-link]: https://github.com/pandas-dev/pandas
 [plotille-link]: https://github.com/tammoippen/plotille
 [pypi-badge]: https://img.shields.io/pypi/v/tsigna.svg
 [pypi-link]: https://pypi.org/project/tsigna/
+[pypi-releases]: https://pypi.org/project/your-package-name/#history
 [ticker-link]: https://github.com/achannarasappa/ticker
 [venv-link]: https://docs.python.org/3/tutorial/venv.html
 [yahooquery-link]: https://github.com/dpguthrie/yahooquery
