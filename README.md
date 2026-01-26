@@ -27,7 +27,7 @@ These libraries and their sub-dependencies will be installed automatically when 
 
 ## Installation
 
-It is recommended to install Tsigna within a [virtual environment](https://docs.python.org/3/tutorial/venv.html) to avoid conflicts with system packages. Some Linux distributions enforce this. You can use `pipx` to handle the virtual environment automatically, or create one manually and use `pip`.
+It is recommended to install Tsigna within a [virtual environment][venv-link] to avoid conflicts with system packages. Some Linux distributions enforce this. You can use `pipx` to handle the virtual environment automatically, or create one manually and use `pip`.
 
 ### Installation with `pipx`
 
@@ -64,7 +64,7 @@ pipx install tsigna
 
 ### Installation with `pip`
 
-If you prefer to manage the virtual environment manually, you can create and activate it by following this [tutorial](https://docs.python.org/3/tutorial/venv.html). Then install Tsigna:
+If you prefer to manage the virtual environment manually, you can create and activate it by following this [tutorial][venv-link]. Then install Tsigna:
 
 ```bash
 pip install tsigna
@@ -125,14 +125,17 @@ This project is licensed under the MIT License. See the LICENSE file for details
 
 ## Acknowledgements
 
-Tsigna is not doing much more than getting data from [yahooquery](https://github.com/dpguthrie/yahooquery), processing it with [pandas](https://github.com/pandas-dev/pandas), and plotting it with [plotille](https://github.com/tammoippen/plotille), so thanks to the creators and contributors of these powerful libraries for making it possible.
+Tsigna is not doing much more than getting data from [yahooquery][yahooquery-link], processing it with [pandas][pandas-link], and plotting it with [plotille][plotille-link], so thanks to the creators and contributors of these powerful libraries for making it possible.
 
-Thanks also to the [ticker](https://github.com/achannarasappa/ticker) tool, which is very useful to track prices in real time from the terminal.
+Thanks also to the [ticker][ticker-link] tool, which is very useful to track prices in real time from the terminal.
 
-[pypi-badge]: https://img.shields.io/pypi/v/tsigna.svg
-[pypi-link]: https://pypi.org/project/tsigna/
 [license-badge]: https://img.shields.io/pypi/l/tsigna.svg
 [license-link]: https://github.com/monsieurlinux/tsigna/blob/main/LICENSE
 [pandas-link]: https://github.com/pandas-dev/pandas
 [plotille-link]: https://github.com/tammoippen/plotille
+[pypi-badge]: https://img.shields.io/pypi/v/tsigna.svg
+[pypi-link]: https://pypi.org/project/tsigna/
+[ticker-link]: https://github.com/achannarasappa/ticker
+[venv-link]: https://docs.python.org/3/tutorial/venv.html
 [yahooquery-link]: https://github.com/dpguthrie/yahooquery
+
