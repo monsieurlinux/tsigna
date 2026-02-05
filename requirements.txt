@@ -22,17 +22,15 @@ lxml==6.0.2
     # via yahooquery
 numpy==2.4.1
     # via pandas
-pandas==2.3.3
+pandas==3.0.0
     # via
     #   tsigna (pyproject.toml)
     #   yahooquery
-plotille==5.0.0
+plotille==6.0.3
     # via tsigna (pyproject.toml)
 pycparser==3.0
     # via cffi
 python-dateutil==2.9.0.post0
-    # via pandas
-pytz==2025.2
     # via pandas
 requests==2.32.5
     # via requests-futures
@@ -46,8 +44,6 @@ tqdm==4.67.1
     # via yahooquery
 typing-extensions==4.15.0
     # via beautifulsoup4
-tzdata==2025.3
-    # via pandas
 urllib3==2.6.3
     # via requests
 yahooquery==2.4.1
