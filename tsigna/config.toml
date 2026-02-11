@@ -13,6 +13,7 @@ text = "white"
 main_line = "blue"
 overbought = "red"
 oversold = "green"
+log_grid = "white"
 
 [atr]
 # Average True Range

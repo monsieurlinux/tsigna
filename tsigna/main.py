@@ -29,6 +29,7 @@ import tomllib
 from pathlib import Path
 
 # Third-party library imports
+import numpy as np
 import pandas as pd
 import plotille
 import requests
@@ -96,7 +97,7 @@ def main():
     try:
         load_config()
     except FileNotFoundError as e:
-        logger.error(f'Failed to load config: {e}')
+        logger.error(f'Failed to load configuration file: {e}')
         return
 
     parser = argparse.ArgumentParser()
@@ -117,6 +118,8 @@ def main():
                         help='display only MFI indicator')
     parser.add_argument('-i', '--indicator-info', action='store_true',
                         help='show indicator information')
+    parser.add_argument('-l', '--log-scale', action='store_true',
+                        help='use a logarithmic scale on the y-axis')
     parser.add_argument('-m', '--macd', action='store_true',
                         help='display MACD indicator (Moving Average Convergence Divergence)')
     parser.add_argument('-M', '--macd-only', action='store_true',
@@ -172,7 +175,13 @@ def main():
         logger.error(f'OBV indicator not available for ratio plot')
         return
 
-    main_ind = 'bb' if args.bollinger else 'ma'
+    if args.log_scale:
+        main_ind = 'ls'
+    elif args.bollinger:
+        main_ind = 'bb'
+    else:
+        main_ind = 'ma'
+
     xtra_ind = []
     if args.volume or args.volume_only: xtra_ind.append('vol')
     if args.macd or args.macd_only: xtra_ind.append('macd')
@@ -325,6 +334,7 @@ def process_data(df1, df2, years, plot_name, main_ind = 'ma' , xtra_ind = []):
     # Calculate and add columns for requested indicators
     if 'ma' in main_ind: df = add_moving_averages(df)
     if 'bb' in main_ind: df = add_bollinger_bands(df)
+    if 'ls' in main_ind: df = log_transform(df)
     if 'macd' in xtra_ind: df = add_macd(df)
     if 'rsi' in xtra_ind: df = add_rsi(df)
 
@@ -392,6 +402,21 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     elif plot_type == 'obv':
         obv = df['obv'].tolist()
         all_values = obv
+    elif plot_type == 'ls':
+        close = df['log_adjclose'].tolist()
+        log1 = np.log(1)
+        log10 = np.log(10)
+        log100 = np.log(100)
+        log1000 = np.log(1000)
+        log10000 = np.log(10000)
+        log100000 = np.log(100000)
+        line1 = [log1] * len(dates)
+        line10 = [log10] * len(dates)
+        line100 = [log100] * len(dates)
+        line1000 = [log1000] * len(dates)
+        line10000 = [log10000] * len(dates)
+        line100000 = [log100000] * len(dates)
+        all_values = close
     elif plot_type == 'bb':
         close = df['adjclose'].tolist()
         sma = df['sma'].tolist()
@@ -406,11 +431,15 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         all_values = close + ma1 + ma2 + ma3
         
     fig = plotille.Figure()
-    fig.y_ticks_fkt = get_y_tick
+
+    if plot_type == 'ls':
+        fig.y_ticks_fkt = get_y_tick_log
+    else:
+        fig.y_ticks_fkt = get_y_tick
 
     # Determine the dimensions and limits of the plot
-    fig.width = shutil.get_terminal_size()[0] - 21
-    fig.height = math.floor(shutil.get_terminal_size()[1] * height_ratio) - 5
+    fig.width = shutil.get_terminal_size().columns - 21
+    fig.height = math.floor(shutil.get_terminal_size().lines * height_ratio) - 5
     fig.set_x_limits(dates[0], dates[-1])
 
     # set_y_limits() needs min and max to be different, so ensure it's the case.
@@ -429,6 +458,8 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
     main_line_color = CONFIG['plot']['colors']['main_line']
     overbought_color = CONFIG['plot']['colors']['overbought']
     oversold_color = CONFIG['plot']['colors']['oversold']
+    log_grid_color = CONFIG['plot']['colors']['log_grid']
+
     if plot_type == 'vol':
         fig.plot(dates, volume, lc=main_line_color)
         last = f'{volume[-1]:,.0f}'
@@ -466,6 +497,18 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         fig.plot(dates, obv, lc=main_line_color)
         last = f'{obv[-1]:,.0f}'
         text = f'OBV last value: {last}'
+    elif plot_type == 'ls':
+        fig.plot(dates, line1, lc=log_grid_color)
+        fig.plot(dates, line10, lc=log_grid_color)
+        fig.plot(dates, line100, lc=log_grid_color)
+        fig.plot(dates, line1000, lc=log_grid_color)
+        fig.plot(dates, line10000, lc=log_grid_color)
+        fig.plot(dates, line100000, lc=log_grid_color)
+        fig.plot(dates, close, lc=main_line_color)
+        close = df['adjclose'].tolist()  # Display real value, not log
+        last = f'{close[-1]:.4f}' if close[-1] < 10 else f'{close[-1]:,.2f}'
+        change = f'{(close[-1] / close[0] - 1) * 100:+.0f}'
+        text = f'{plot_name} last value: {last} ({change}%)'
     elif plot_type == 'bb':
         fig.plot(dates, sma, lc=CONFIG['bb']['colors']['sma'])
         fig.plot(dates, close, lc=main_line_color)
@@ -504,6 +547,13 @@ def get_y_tick(min_, max_):
     else:
         tick = f'{min_:,.2f}'  # Show 2 decimals and thousands separator
 
+    return tick
+
+
+def get_y_tick_log(min_, max_):
+    # Reverse log calculation
+    tick = np.exp(min_)    # i.e., y = e^{y′}
+    tick = f'{tick:,.2f}'  # Show 2 decimals and thousands separator
     return tick
 
 
@@ -582,6 +632,12 @@ def add_bollinger_bands(df):
     return df
 
 
+def log_transform(df):
+    # Natural log (base e)
+    df['log_adjclose'] = np.log(df['adjclose'])
+    return df
+
+
 def add_atr(df):
     # Calculate and add ATR indicator (Average True Range)
     df = df.copy()
@@ -655,7 +711,7 @@ def get_cache_dir(config_dir):
 
 
 def print_indicator_info():
-    width = shutil.get_terminal_size()[0]
+    width = shutil.get_terminal_size().columns
     indent = ' ' * 4
     
     # Print a section for each indicator with its description
