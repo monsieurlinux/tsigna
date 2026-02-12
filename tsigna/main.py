@@ -552,8 +552,16 @@ def get_y_tick(min_, max_):
 
 def get_y_tick_log(min_, max_):
     # Reverse log calculation
-    tick = np.exp(min_)    # i.e., y = e^{y′}
-    tick = f'{tick:,.2f}'  # Show 2 decimals and thousands separator
+    min_ = np.exp(min_)
+    max_ = np.exp(max_)
+    exp = math.floor(math.log10(max_))
+    tick = ''
+
+    for c in [1, 2, 3, 5]:  # Or maybe [1, 1.25, 2, 2.5, 3, 4, 5, 8]
+        val = int(c * 10 ** exp)
+        if min_ < val < max_:
+            tick = f'{val:,}'
+
     return tick
 
 
