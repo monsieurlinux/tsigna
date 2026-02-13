@@ -404,18 +404,14 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         all_values = obv
     elif plot_type == 'ls':
         close = df['log_adjclose'].tolist()
-        log1 = np.log(1)
-        log10 = np.log(10)
-        log100 = np.log(100)
-        log1000 = np.log(1000)
-        log10000 = np.log(10000)
-        log100000 = np.log(100000)
-        line1 = [log1] * len(dates)
-        line10 = [log10] * len(dates)
-        line100 = [log100] * len(dates)
-        line1000 = [log1000] * len(dates)
-        line10000 = [log10000] * len(dates)
-        line100000 = [log100000] * len(dates)
+        line0p1 = [np.log(0.1)] * len(dates)
+        line1 = [np.log(1)] * len(dates)
+        line10 = [np.log(10)] * len(dates)
+        line100 = [np.log(100)] * len(dates)
+        line1000 = [np.log(1000)] * len(dates)
+        line10000 = [np.log(10000)] * len(dates)
+        line100000 = [np.log(100000)] * len(dates)
+        line1000000 = [np.log(1000000)] * len(dates)
         all_values = close
     elif plot_type == 'bb':
         close = df['adjclose'].tolist()
@@ -498,12 +494,14 @@ def plot_data(df, plot_name, plot_type, height_ratio=1):
         last = f'{obv[-1]:,.0f}'
         text = f'OBV last value: {last}'
     elif plot_type == 'ls':
+        fig.plot(dates, line0p1, lc=log_grid_color)
         fig.plot(dates, line1, lc=log_grid_color)
         fig.plot(dates, line10, lc=log_grid_color)
         fig.plot(dates, line100, lc=log_grid_color)
         fig.plot(dates, line1000, lc=log_grid_color)
         fig.plot(dates, line10000, lc=log_grid_color)
         fig.plot(dates, line100000, lc=log_grid_color)
+        fig.plot(dates, line1000000, lc=log_grid_color)
         fig.plot(dates, close, lc=main_line_color)
         close = df['adjclose'].tolist()  # Display real value, not log
         last = f'{close[-1]:.4f}' if close[-1] < 10 else f'{close[-1]:,.2f}'
@@ -557,10 +555,10 @@ def get_y_tick_log(min_, max_):
     exp = math.floor(math.log10(max_))
     tick = ''
 
-    for c in [1, 2, 3, 5]:  # Or maybe [1, 1.25, 2, 2.5, 3, 4, 5, 8]
-        val = int(c * 10 ** exp)
+    for c in [1, 2, 3, 5]:
+        val = c * 10 ** exp
         if min_ < val < max_:
-            tick = f'{val:,}'
+            tick = f'{val:,.0f}' if val >= 1 else f'{val:.1f}'
 
     return tick
 
