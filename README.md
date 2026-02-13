@@ -54,7 +54,7 @@ It is recommended to install Tsigna within a [virtual environment][venv-link] to
     python -m pipx ensurepath
     ```
 
-You may need to close and restart your terminal for the PATH changes to take effect.
+You may need to reopen your terminal for the PATH changes to take effect. If you encounter a problem, please refer to the official [pipx documentation][pipx-link].
 
 **2. Install Tsigna:**
 
@@ -85,7 +85,7 @@ View all releases on:
 tsigna [arguments] [TICKER1] [TICKER2]
 ```
 
-### Command-Line Arguments
+### Arguments
 
 | Argument           | Short Flag | Description                                                  |
 | ------------------ | ---------- | ------------------------------------------------------------ |
@@ -96,6 +96,7 @@ tsigna [arguments] [TICKER1] [TICKER2]
 | `--mfi`            | `-f`       | Display MFI indicator (Money Flow Index)                     |
 | `--mfi-only`       | `-F`       | Display **only** MFI indicator                               |
 | `--indicator-info` | `-i`       | Show indicator information                                   |
+| `--log-scale`      | `-l`       | Use a logarithmic scale on the y-axis                        |
 | `--macd`           | `-m`       | Display MACD indicator (Moving Average Convergence Divergence) |
 | `--macd-only`      | `-M`       | Display **only** MACD indicator                              |
 | `--no-cache`       | `-n`       | Bypass cache and get latest data                             |
@@ -140,6 +141,7 @@ Thanks also to the [ticker][ticker-link] tool, which is very useful to track pri
 [license-badge]: https://img.shields.io/pypi/l/tsigna.svg
 [license-link]: https://github.com/monsieurlinux/tsigna/blob/main/LICENSE
 [pandas-link]: https://github.com/pandas-dev/pandas
+[pipx-link]: https://github.com/pypa/pipx
 [plotille-link]: https://github.com/tammoippen/plotille
 [pypi-badge]: https://img.shields.io/pypi/v/tsigna.svg
 [pypi-link]: https://pypi.org/project/tsigna/

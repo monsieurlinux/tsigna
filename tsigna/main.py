@@ -691,6 +691,8 @@ def load_config():
 
 
 def get_config_dir(app_name):
+    # https://github.com/tox-dev/platformdirs
+    # https://platformdirs.readthedocs.io
     if sys.platform == "win32":
         # Windows: Use %APPDATA% (%USERPROFILE%\AppData\Roaming)
         config_dir = Path(os.environ.get("APPDATA", "")) / app_name
