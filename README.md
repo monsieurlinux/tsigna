@@ -5,13 +5,15 @@
 [![PyPI][pypi-badge]][pypi-link]
 [![License][license-badge]][license-link]
 
-Tsigna is a Python financial analysis tool that runs entirely in the terminal. It is most useful for medium-term trading. It fetches historical stock data from Yahoo Finance, calculates technical indicators including moving averages, MACD, and RSI, and displays them as text-based charts using the plotille library. The tool supports single ticker analysis, ratio comparisons between two tickers, and a special MMRI calculation. Users can customize the time period and split the terminal display to show multiple indicators simultaneously.
+Tsigna is a Python financial analysis tool that runs entirely in the terminal. Designed for medium-term trading, it fetches historical stock data from Yahoo Finance to generate text-based charts using the plotille library.
+
+Tsigna calculates technical indicators like moving averages, MACD, and RSI, while offering unique features such as **ratio comparison** between two tickers in addition to single-ticker analysis. Users can customize the timeframe and view multiple indicators simultaneously.
 
 ![NVDA stock price, Bollinger Bands and Stochastics over 1 year](https://github.com/monsieurlinux/tsigna/raw/main/img/tsigna-nvda-bollinger-bands-stochastics-1y.png "NVDA stock price, Bollinger Bands and Stochastics over 1 year")
 
 ## Background
 
-Originally I was looking for a free online tool to plot the **ratio between two tickers**, but I didn't find such a tool so I started working on Tsigna. The name comes from 'T' for terminal and the plural form of signum, the latin word for signal. The 'T' also stands for technical, like in technical indicators, from which we get technical signals.
+I originally looked for a free online tool to plot the **ratio between two tickers** but couldn't find one, so I started working on Tsigna. The name combines 'T' for terminal and the plural of *signum*, the Latin word for signal. The 'T' also stands for technical, as the tool is designed to generate technical signals.
 
 ![Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years](https://github.com/monsieurlinux/tsigna/raw/main/img/tsigna-nvda-wmt-moving-averages-rsi-2y.png "Ratio between NVDA and WMT stock prices, moving averages and RSI indicator over 2 years")
 
