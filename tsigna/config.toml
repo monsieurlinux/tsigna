@@ -3,7 +3,7 @@ enable = true
 expiry = 300  # seconds
 
 [plot]
-years_to_plot = 1
+period_to_plot = "1y"
 indicator_height_ratio = 0.3
 
 [plot.colors]

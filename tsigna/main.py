@@ -21,11 +21,14 @@ import argparse
 import logging
 import math
 import os
+import re
 import shutil
 import sys
 import textwrap
 import time
 import tomllib
+from datetime import timedelta
+from dateutil.relativedelta import relativedelta
 from pathlib import Path
 
 # Third-party library imports
@@ -49,35 +52,61 @@ CONFIG = {}
 INDICATOR_DESCRIPTIONS = {
     "ATR (Average True Range)": {
         "category": "Volatility Indicator",
-        "description": "Measures market volatility by decomposing the entire range of an asset price for that period. Use it to set stop-loss levels (placing them wider than the ATR) or to determine position sizing based on current market noise."
+        "description": "Measures market volatility by decomposing the entire "
+                       "range of an asset price for that period. Use it to set "
+                       "stop-loss levels (placing them wider than the ATR) or to "
+                       "determine position sizing based on current market noise."
     },
     "Bollinger Bands": {
         "category": "Volatility Indicator",
-        "description": "Consists of a middle band (SMA) and two outer bands that expand and contract based on volatility. Use it to identify overbought/oversold conditions (price near bands) and potential breakouts after periods of low volatility (squeeze)."
+        "description": "Consists of a middle band (SMA) and two outer bands "
+                       "that expand and contract based on volatility. Use it "
+                       "to identify overbought/oversold conditions (price near "
+                       "bands) and potential breakouts after periods of low "
+                       "volatility (squeeze)."
     },
     "MACD (Moving Average Convergence Divergence)": {
         "category": "Trend / Momentum Indicator",
-        "description": "Shows the relationship between two moving averages. Look for signal line crossovers to identify trend direction and divergences (where price moves opposite to the indicator) to spot potential reversals."
+        "description": "Shows the relationship between two moving averages. "
+                       "Look for signal line crossovers to identify trend "
+                       "direction and divergences (where price moves opposite "
+                       "to the indicator) to spot potential reversals."
     },
     "MFI (Money Flow Index)": {
         "category": "Momentum Oscillator",
-        "description": "Incorporates both price and volume data to measure buying and selling pressure. Use it like RSI to identify overbought/oversold levels, but rely on it more heavily as volume-driven divergence is often a stronger signal."
+        "description": "Incorporates both price and volume data to measure "
+                       "buying and selling pressure. Use it like RSI to "
+                       "identify overbought/oversold levels, but rely on it "
+                       "more heavily as volume-driven divergence is often a "
+                       "stronger signal."
     },
     "Moving Averages": {
         "category": "Trend Indicator",
-        "description": "Smooths out price data to identify the direction of the trend. Use it to determine entry points (e.g., buy when price crosses above the line) or dynamic support/resistance levels."
+        "description": "Smooths out price data to identify the direction of "
+                       "the trend. Use it to determine entry points (e.g., buy "
+                       "when price crosses above the line) or dynamic support/"
+                       "resistance levels."
     },
     "OBV (On-Balance Volume)": {
         "category": "Volume Indicator",
-        "description": "A cumulative indicator that adds volume on up days and subtracts volume on down days. Use it to confirm the strength of a trend (e.g., rising price + rising OBV = strong trend) or spot reversals via divergence."
+        "description": "A cumulative indicator that adds volume on up days and "
+                       "subtracts volume on down days. Use it to confirm the "
+                       "strength of a trend (e.g., rising price + rising OBV = "
+                       "strong trend) or spot reversals via divergence."
     },
     "RSI (Relative Strength Index)": {
         "category": "Momentum Oscillator",
-        "description": "Measures the speed and change of price movements on a scale of 0 to 100. Use it to identify overbought conditions (above 70) or oversold conditions (below 30) and to spot bullish or bearish divergences."
+        "description": "Measures the speed and change of price movements on a "
+                       "scale of 0 to 100. Use it to identify overbought "
+                       "conditions (above 70) or oversold conditions (below "
+                       "30) and to spot bullish or bearish divergences."
     },
     "Stochastics": {
         "category": "Momentum Oscillator",
-        "description": "Compares a particular closing price of an asset to a range of its prices over a certain period of time. Look for the lines to cross in overbought (above 80) or oversold (below 20) areas to time reversals."
+        "description": "Compares a particular closing price of an asset to a "
+                       "range of its prices over a certain period of time. "
+                       "Look for the lines to cross in overbought (above 80) "
+                       "or oversold (below 20) areas to time reversals."
     },
 }
 
@@ -121,7 +150,8 @@ def main():
     parser.add_argument('-l', '--log-scale', action='store_true',
                         help='use a logarithmic scale on the y-axis')
     parser.add_argument('-m', '--macd', action='store_true',
-                        help='display MACD indicator (Moving Average Convergence Divergence)')
+                        help='display MACD indicator '
+                             '(Moving Average Convergence Divergence)')
     parser.add_argument('-M', '--macd-only', action='store_true',
                         help='display only MACD indicator')
     parser.add_argument('-n', '--no-cache', action='store_true',
@@ -130,6 +160,10 @@ def main():
                         help='display OBV indicator (On-Balance Volume)')
     parser.add_argument('-O', '--obv-only', action='store_true',
                         help='display only OBV indicator')
+    parser.add_argument('-p', '--period', type=parse_period,
+                        default=CONFIG['plot']['period_to_plot'],
+                        help='set period to plot, '
+                             'e.g. 1y, ytd, 3m, 6w, 10d (default: 1y)')
     parser.add_argument('-r', '--rsi', action='store_true',
                         help='display RSI indicator (Relative Strength Index)')
     parser.add_argument('-R', '--rsi-only', action='store_true',
@@ -144,10 +178,10 @@ def main():
                         help='display volume')
     parser.add_argument('-W', '--volume-only', action='store_true',
                         help='display only volume')
-    parser.add_argument('-y', '--years', type=int, default=CONFIG['plot']['years_to_plot'],
-                        help='set years to plot, use 0 for ytd (default: 1)')
     args = parser.parse_args()
 
+    # Period like '1y' is returned as the start date by parse_period()
+    start_date = args.period
     ticker1, ticker2, plot_name = get_tickers_and_plot_name(args)
 
     if args.indicator_info:
@@ -157,7 +191,8 @@ def main():
     elif not ticker1:
         # User did not ask for information nor provide a ticker
         parser.print_usage()
-        logger.error(f'Please provide a ticker or use -i for indicator information')
+        logger.error(f'Please provide a ticker or '
+                      'use -i for indicator information')
         return
     elif ticker2 and (args.volume or args.volume_only):
         logger.error(f'Volume not available for ratio plot')
@@ -203,7 +238,7 @@ def main():
     except Exception as e:
         logger.exception(f'Unexpected error: {e}')
     else:
-        df = process_data(df1, df2, args.years, plot_name, main_ind, xtra_ind)
+        df = process_data(df1, df2, start_date, plot_name, main_ind, xtra_ind)
         if args.volume_only:
             plot_data(df, plot_name, 'vol')
         elif args.macd_only:
@@ -232,6 +267,44 @@ def main():
                 plot_data(df, plot_name, xtra_ind[0], ratio)
             else:
                 plot_data(df, plot_name, main_ind)
+
+
+def parse_period(period: str) -> pd.Timestamp:
+    """
+    Parse a period string like '1y', 'ytd', '3m', '6w', '10d'.
+    Return a pd.Timestamp corresponding to the start date.
+    """
+    period = period.lower().strip()
+    today = pd.Timestamp.now(tz='UTC').normalize()
+    start_day = today
+
+    if period == 'ytd':
+        start_date = today.replace(month=1, day=1)
+    else:
+        pattern = r'^(\d+)([ymwd])$'
+        match = re.match(pattern, period.lower())
+        if not match:
+            raise argparse.ArgumentTypeError(
+                f"Invalid period '{period}', "
+                 "expected format: <number><unit> (e.g. 1y, 3m, 6w, 10d)"
+            )
+
+        num = int(match.group(1))
+        unit = match.group(2)
+
+        if unit == 'y':
+            start_date = today - relativedelta(years=num)
+        elif unit == 'm':
+            start_date = today - relativedelta(months=num)
+        elif unit == 'w':
+            start_date = today - timedelta(weeks=num)
+        elif unit == 'd':
+            start_date = today - timedelta(days=num)
+
+    logger.debug(f'today is {today}')
+    logger.debug(f'start_date is {start_date}')
+
+    return start_date
 
 
 def get_tickers_and_plot_name(args):
@@ -305,7 +378,7 @@ def get_data(ticker1, ticker2, no_cache=False):
     return df1, df2
 
 
-def process_data(df1, df2, years, plot_name, main_ind = 'ma' , xtra_ind = []):
+def process_data(df1, df2, start_date, plot_name, main_ind = 'ma' , xtra_ind = []):
     if df2.empty:
         # Only one ticker has been provided, so this is the data to plot
         df = df1
@@ -345,19 +418,9 @@ def process_data(df1, df2, years, plot_name, main_ind = 'ma' , xtra_ind = []):
         if 'atr' in xtra_ind: df = add_atr(df)
         if 'obv' in xtra_ind: df = add_obv(df)
 
-    # Keep only the data range to be plotted (use pandas dates types)
-    today = pd.Timestamp.now(tz='UTC').normalize()
+    # Keep only the data range to be plotted
+    df = df[df.index >= start_date]
     
-    if years == 0:
-        start_day = today.replace(month=1, day=1)  # ytd plot
-    else:
-        start_day = today.replace(year=today.year - years)
-
-    df = df[df.index >= start_day]
-    
-    logger.debug(f'today is {today}')
-    logger.debug(f'start_day is {start_day}')
-
     return df
 
 
