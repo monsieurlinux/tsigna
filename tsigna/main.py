@@ -280,15 +280,13 @@ def parse_period(period: str) -> pd.Timestamp:
 
     if period == 'ytd':
         start_date = today.replace(month=1, day=1)
-    else:
-        pattern = r'^(\d+)([ymwd])$'
-        match = re.match(pattern, period.lower())
-        if not match:
-            raise argparse.ArgumentTypeError(
-                f"Invalid period '{period}', "
-                 "expected format: <number><unit> (e.g. 1y, 3m, 6w, 10d)"
-            )
-
+    elif period == 'qtd':
+        quarter = (today.month - 1) // 3 + 1  # 1, 2, 3, 4
+        start_month = 3 * quarter - 2         # 1, 4, 7, 10
+        start_date = today.replace(month=start_month, day=1)
+    elif period == 'mtd':
+        start_date = today.replace(day=1)
+    elif (match := re.match(r'^(\d+)([ymwd])$', period)):
         num = int(match.group(1))
         unit = match.group(2)
 
@@ -300,6 +298,12 @@ def parse_period(period: str) -> pd.Timestamp:
             start_date = today - timedelta(weeks=num)
         elif unit == 'd':
             start_date = today - timedelta(days=num)
+    else:
+        raise argparse.ArgumentTypeError(
+            f"Invalid period '{period}'. "
+            "Supported: 'ytd', 'qtd', 'mtd', "
+            "or patterns like '1y', '3m', '6w', '10d'."
+        )
 
     logger.debug(f'today is {today}')
     logger.debug(f'start_date is {start_date}')
