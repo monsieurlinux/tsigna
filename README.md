@@ -104,6 +104,7 @@ tsigna [arguments] [TICKER1] [TICKER2]
 | `--no-cache`       | `-n`       | Bypass cache and get latest data                             |
 | `--obv`            | `-o`       | Display OBV indicator (On-Balance Volume)                    |
 | `--obv-only`       | `-O`       | Display **only** OBV indicator                               |
+| `--period`         | `-p`       | Set period to plot, e.g. 1y, ytd, 3m, 6w, 10d (default: 1y)  |
 | `--rsi`            | `-r`       | Display RSI indicator (Relative Strength Index)              |
 | `--rsi-only`       | `-R`       | Display **only** RSI indicator                               |
 | `--stoch`          | `-s`       | Display Stochastics indicator                                |
@@ -111,7 +112,6 @@ tsigna [arguments] [TICKER1] [TICKER2]
 | `--version`        | `-v`       | Show program's version number and exit                       |
 | `--volume`         | `-w`       | Display volume                                               |
 | `--volume-only`    | `-W`       | Display **only** volume                                      |
-| `--years`          | `-y`       | Set years to plot, use 0 for ytd (default: 1)                |
 
 ## Configuration
 
