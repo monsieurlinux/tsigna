@@ -26,7 +26,7 @@ dependencies = [
 Repository = "https://github.com/monsieurlinux/tsigna"
 
 [project.scripts]
-tsigna = "tsigna.main:main"
+tsigna = "tsigna:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["tsigna"]

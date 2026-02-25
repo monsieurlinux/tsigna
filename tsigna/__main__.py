@@ -39,11 +39,6 @@ import requests
 from curl_cffi import requests as curlreqs
 from yahooquery import Ticker  # Alternative fork: ybankinplay
 
-# Add project root to sys.path so script can be called directly w/o 'python3 -m'
-PROJECT_ROOT = Path(__file__).resolve().parent.parent
-if str(PROJECT_ROOT) not in sys.path:
-    sys.path.insert(0, str(PROJECT_ROOT))
-
 # Local imports
 from tsigna import __version__
 
@@ -735,6 +730,10 @@ def add_obv(df):
 
 def load_config():
     global CONFIG, CACHE_DIR
+
+    # TODO: PROJECT_ROOT is a temp patch
+    # Automatically get 'tsigna' to avoid hardcoding
+    PROJECT_ROOT = Path(__file__).resolve().parent.parent
 
     app_name = 'tsigna'
     config_file = 'config.toml'
