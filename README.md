@@ -98,6 +98,7 @@ tsigna [arguments] [TICKER1] [TICKER2]
 | `--mfi`            | `-f`       | Display MFI indicator (Money Flow Index)                     |
 | `--mfi-only`       | `-F`       | Display **only** MFI indicator                               |
 | `--indicator-info` | `-i`       | Show indicator information                                   |
+| `--ignore-missing` | `-I`       | Ignore rows with missing values                              |
 | `--log-scale`      | `-l`       | Use a logarithmic scale on the y-axis                        |
 | `--macd`           | `-m`       | Display MACD indicator (Moving Average Convergence Divergence) |
 | `--macd-only`      | `-M`       | Display **only** MACD indicator                              |

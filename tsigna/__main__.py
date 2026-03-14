@@ -142,6 +142,8 @@ def main():
                         help='display only MFI indicator')
     parser.add_argument('-i', '--indicator-info', action='store_true',
                         help='show indicator information')
+    parser.add_argument('-I', '--ignore-missing', action='store_true',
+                        help='ignore rows with missing values')
     parser.add_argument('-l', '--log-scale', action='store_true',
                         help='use a logarithmic scale on the y-axis')
     parser.add_argument('-m', '--macd', action='store_true',
@@ -234,7 +236,14 @@ def main():
         logger.exception(f'Unexpected error: {e}')
     else:
         df = process_data(df1, df2, start_date, plot_name, main_ind, xtra_ind)
-        if args.volume_only:
+
+        if args.ignore_missing:
+            df.dropna(inplace=True)
+
+        if df.isna().any().any():
+            logger.error(f'Some rows have missing values:')
+            print(df[df.isna().any(axis=1)])
+        elif args.volume_only:
             plot_data(df, plot_name, 'vol')
         elif args.macd_only:
             plot_data(df, plot_name, 'macd')
@@ -818,6 +827,7 @@ def log_data_frame(df, description = ''):
     """ This function is used only for debugging. """
     logger.debug(f'DataFrame {description}\n{df}')
     #logger.debug(f'DataFrame {description}\n{df.head(20)}')
+    #logger.debug(f'DataFrame information\n{df.info()}')
     #logger.debug(f'DataFrame index data type: {df.index.dtype}')
     #logger.debug(f'DataFrame index class: {type(df.index)}')
     #logger.debug(f'DataFrame columns data types\n{df.dtypes}')
