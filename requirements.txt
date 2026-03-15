@@ -6,13 +6,13 @@
 #
 beautifulsoup4==4.14.3
     # via yahooquery
-certifi==2026.1.4
+certifi==2026.2.25
     # via
     #   curl-cffi
     #   requests
 cffi==2.0.0
     # via curl-cffi
-charset-normalizer==3.4.4
+charset-normalizer==3.4.5
     # via requests
 curl-cffi==0.14.0
     # via yahooquery
@@ -20,13 +20,13 @@ idna==3.11
     # via requests
 lxml==6.0.2
     # via yahooquery
-numpy==2.4.1
+numpy==2.4.3
     # via pandas
-pandas==3.0.0
+pandas==3.0.1
     # via
     #   tsigna (pyproject.toml)
     #   yahooquery
-plotille==6.0.3
+plotille==6.0.5
     # via tsigna (pyproject.toml)
 pycparser==3.0
     # via cffi
@@ -40,7 +40,7 @@ six==1.17.0
     # via python-dateutil
 soupsieve==2.8.3
     # via beautifulsoup4
-tqdm==4.67.1
+tqdm==4.67.3
     # via yahooquery
 typing-extensions==4.15.0
     # via beautifulsoup4
